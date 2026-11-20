@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>일주일의 설렘</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   일주일의 설렘 v0.2 · Oseong Vibe Coding EduHub · K.G.B.
+   [구조] 1) 스타일  2) 화면 마크업  3) ENGINE(순수 계산, engine.js)  4) DATA(1~1250회 내장)  5) UI
+   ========================================================= */
+:root{--bg1:#0d1220;--bg2:#1a1430;--card:rgba(255,255,255,.045);--line:rgba(255,255,255,.09);
+  --text:#ece9f5;--sub:#a9a3c0;--gold:#f5c451;--mint:#5ee6b0;--rose:#ff7d93;--sky:#6fb6ff}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Noto Sans KR",system-ui,sans-serif;color:var(--text);
+  background:radial-gradient(1200px 600px at 80% -10%,#3a2a66 0%,transparent 60%),linear-gradient(180deg,var(--bg1),var(--bg2));min-height:100vh;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+h1,h2,.serif{font-family:"Gowun Batang",serif}
+h1{font-size:2.1rem;margin:.2em 0 0;letter-spacing:-.5px}
+h2{font-size:1.25rem;margin:0 0 .4em}
+.muted{color:var(--sub);font-size:.88rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0}
+.badge{display:inline-block;font-size:.72rem;padding:2px 9px;border-radius:99px;background:rgba(245,196,81,.15);color:var(--gold);font-weight:700}
+button{font-family:inherit;font-size:.95rem;border:0;border-radius:12px;padding:10px 16px;cursor:pointer;font-weight:700;background:linear-gradient(135deg,#f5c451,#f08f5d);color:#241a07}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+button:disabled{opacity:.4;cursor:not-allowed}
+input,textarea,select{font-family:inherit;font-size:.95rem;background:rgba(0,0,0,.25);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 11px;width:100%}
+select{width:auto}
+textarea{min-height:70px;resize:vertical}
+label{font-size:.85rem;color:var(--sub);display:block;margin:10px 0 4px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grow{flex:1}
+.hero{text-align:center;padding:26px 18px}
+.count{font-size:2rem;font-weight:700;letter-spacing:1px;margin:6px 0;font-variant-numeric:tabular-nums}
+.meter{height:10px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:10px auto 4px;max-width:420px}
+.meter>i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--gold),var(--rose));transition:width .8s}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px}
+.day{text-align:center;padding:9px 2px;border-radius:12px;border:1px solid var(--line);cursor:pointer;font-size:.8rem;color:var(--sub);transition:.2s}
+.day b{display:block;font-size:1.05rem;color:var(--text)}
+.day.today{border-color:var(--gold);box-shadow:0 0 18px rgba(245,196,81,.35);color:var(--gold)}
+.day.sel{background:rgba(245,196,81,.12)}
+.panel{display:none}.panel.on{display:block;animation:fade .4s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+#ritual{width:100%;height:230px;border-radius:14px;background:radial-gradient(circle at 50% 50%,#24193f,#120d22);touch-action:none;cursor:crosshair;display:block}
+.gauge{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:8px 0}
+.gauge>i{display:block;height:100%;width:0;background:var(--mint);transition:width .15s}
+.balls{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}
+.ball{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#1a1308;box-shadow:inset -4px -5px 8px rgba(0,0,0,.25),inset 3px 3px 6px rgba(255,255,255,.4);transition:.3s}
+.b1{background:#fbc400}.b2{background:#69c8f2}.b3{background:#ff7272}.b4{background:#aaa}.b5{background:#b0d840}
+.ball.dim{opacity:.28;filter:grayscale(.6)}
+.ball.hit{transform:scale(1.12);box-shadow:0 0 0 3px #fff,0 0 18px var(--gold)}
+.ball.pop{animation:pop .6s}
+@keyframes pop{0%{transform:scale(0) rotate(-180deg)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+.picker{display:grid;grid-template-columns:repeat(9,1fr);gap:5px}
+.pk{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:.85rem;font-weight:700;border:1px solid var(--line);cursor:pointer;color:var(--sub);user-select:none}
+.pk.on{color:#1a1308;border-color:transparent}
+.lens{border:1px solid var(--line);border-radius:16px;padding:14px;margin:12px 0;background:rgba(0,0,0,.14)}
+.lens-h{display:flex;gap:10px;align-items:flex-start}
+.lens-h .ic{font-size:1.5rem;line-height:1}
+.lens-h b{font-size:1.02rem}
+.lens-h .tag{font-size:.72rem;padding:1px 8px;border-radius:99px;margin-left:4px;vertical-align:2px}
+.set{border-top:1px dashed var(--line);padding-top:10px;margin-top:10px}
+.set .meta{font-size:.78rem;color:var(--sub);display:flex;flex-wrap:wrap;gap:4px}
+.fp{font-family:ui-monospace,monospace;color:var(--mint);font-size:.78rem}
+.pill{display:inline-block;font-size:.74rem;padding:1px 8px;border-radius:99px}
+.pg{background:rgba(94,230,176,.15);color:var(--mint)} .pr{background:rgba(255,125,147,.15);color:var(--rose)}
+.py{background:rgba(245,196,81,.15);color:var(--gold)} .pb{background:rgba(111,182,255,.15);color:var(--sky)}
+.big{font-size:1.6rem;font-weight:700;color:var(--gold)}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat div{background:rgba(0,0,0,.18);border-radius:12px;padding:10px}
+.stat small{color:var(--sub);display:block;font-size:.76rem}
+.story{border-left:3px solid var(--gold);padding:4px 0 4px 14px;font-size:1rem}
+.capsule{text-align:center;padding:22px;border:1px dashed var(--gold);border-radius:16px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2a2145;border:1px solid var(--gold);padding:10px 18px;border-radius:12px;opacity:0;transition:.3s;pointer-events:none;z-index:9;max-width:90%}
+.toast.on{opacity:1}
+.rank{font-weight:700}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;place-items:center;z-index:8;padding:16px;overflow:auto}
+.modal.on{display:grid}
+.modal img{max-width:100%;max-height:75vh;border-radius:16px}
+.bar{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:8px 0}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--sky),var(--mint))}
+footer{font-size:.8rem;color:var(--sub);text-align:center;margin-top:30px;line-height:1.8}
+footer b{color:var(--rose)}
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--sub);font-weight:500}
+@media (max-width:440px){.ball{width:36px;height:36px;font-size:.92rem}.balls{gap:6px}.lens{padding:12px}}
+.lg-bar{display:inline-block;height:8px;border-radius:4px;background:var(--mint);vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ① 히어로 -->
+  <section class="card hero">
+    <span class="badge" id="roundBadge">제 ----회</span>
+    <h1>일주일의 설렘</h1>
+    <div class="muted">8가지 렌즈로 고른 세상에 하나뿐인 번호, 부담 없이 설레는 일주일</div>
+    <div class="count" id="countdown">--</div>
+    <div class="muted" id="countSub">토요일 20:35 추첨까지</div>
+    <div class="meter"><i id="thrill" style="width:0"></i></div>
+    <div class="muted">설렘 지수 <span id="thrillPct">0</span>% · 이번 주 예산 남음 <b id="budgetLeft">-</b></div>
+  </section>
+
+  <!-- ② 요일 타임라인 -->
+  <div class="week" id="week"></div>
+
+  <!-- ③-월: 번호 탄생 -->
+  <section class="panel" data-p="0">
+    <div class="card">
+      <span class="badge">월 · 번호 탄생일</span>
+      <h2>손끝으로 만드는 나만의 씨앗</h2>
+      <p class="muted">아래 밤하늘을 손가락이나 마우스로 휘저어 주세요. 움직임의 위치와 마이크로초 단위 시간이 암호학적 난수와 섞여 <b>당신만의 씨앗</b>이 되고, 8가지 렌즈가 모두 이 씨앗으로 번호를 고릅니다. 씨앗은 서버로 전송되지 않아요.</p>
+      <canvas id="ritual"></canvas>
+      <div class="gauge"><i id="entropyBar"></i></div>
+      <div class="row">
+        <span class="muted grow" id="entropyTxt">모은 우주 에너지 0%</span>
+        <select id="perLens" title="렌즈별 세트 수"><option value="1">렌즈별 1세트</option><option value="2">렌즈별 2세트</option><option value="3">렌즈별 3세트</option></select>
+        <button class="ghost" id="quickBtn">빠르게</button>
+        <button id="birthBtn" disabled>번호 탄생 ✨</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>나의 선호 번호 <span class="muted" style="font-size:.85rem">(선택 · 최대 10개)</span></h2>
+      <p class="muted">좋아하는 번호, 가족 생일, 행운의 숫자를 골라 두면 <b>선호 렌즈</b>가 이 번호들로 조합을 만들어요. 6개보다 적게 고르면 빈자리는 대중이 덜 고르는 번호로 채워 당첨 시 몫을 지켜요.</p>
+      <div class="picker" id="picker"></div>
+      <div class="row" style="margin-top:8px"><span class="muted grow" id="favTxt"></span><button class="ghost" id="favClear">비우기</button></div>
+    </div>
+
+    <div class="card" id="galleryCard" style="display:none">
+      <h2>이번 주 렌즈 갤러리</h2>
+      <p class="muted">같은 질문, "어떤 6개?"에 8가지 관점이 각자 답했어요. 모든 세트에 <b>같은 잣대</b>(패턴 점수·균형 검사·대중 선호도·당첨 시 예상 몫)를 붙였으니 비교해 보고 마음이 가는 세트에 구매 표시를 하세요.</p>
+      <div id="gallery"></div>
+      <div class="stat" style="margin-top:12px">
+        <div><small>구매 표시한 세트</small><span class="big" id="boughtN">0</span>세트</div>
+        <div><small>이번 주 무엇이든 당첨될 확률</small><span class="big" id="anyProb">0%</span></div>
+        <div><small>1등 확률 (세트 수 반영)</small><span id="p1">-</span></div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="ghost" id="cardBtn">설렘 카드 만들기</button>
+        <button class="ghost" id="copyBtn">구매 세트 복사</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ③-화~금: 드림 위크 -->
+  <section class="panel" data-p="1">
+    <div class="card">
+      <span class="badge" id="dreamDayBadge">화~금 · 드림 위크</span>
+      <h2>오늘의 확률 이야기</h2>
+      <div class="story serif" id="story"></div>
+    </div>
+    <div class="card">
+      <h2>이번 주 번호의 성격</h2>
+      <div id="dataInsight" class="muted"></div>
+    </div>
+    <div class="card">
+      <h2>드림 캡슐</h2>
+      <p class="muted">당첨되면 하고 싶은 일과, 당첨과 상관없이 <b>1,000원 이하로 할 수 있는 작은 꿈</b>을 적고 봉인하세요. 캡슐은 토요일 추첨 순간까지 열리지 않고, 일요일에 작은 꿈이 <b>오늘의 미션</b>이 됩니다.</p>
+      <div id="capsuleArea"></div>
+    </div>
+  </section>
+
+  <!-- ③-토: 운명의 밤 -->
+  <section class="panel" data-p="2">
+    <div class="card">
+      <span class="badge">토 · 운명의 밤</span>
+      <h2>당첨번호 공개</h2>
+      <p class="muted">판매 마감 20:00 · 추첨 20:35. 추첨이 끝나면 당첨번호 6개와 보너스 번호를 입력하고 <b>공개</b>를 누르세요. 공이 하나씩 떨어지며 모든 렌즈의 번호와 실시간으로 맞춰 봅니다. 입력한 결과는 다음 주 분석 데이터에도 더해져요.</p>
+      <label>당첨번호 6개 (쉼표 또는 띄어쓰기)</label>
+      <input id="winIn" placeholder="예: 4, 5, 25, 28, 32, 42">
+      <label>보너스 번호</label>
+      <div class="row"><input id="bonusIn" style="max-width:120px" placeholder="예: 17"><button id="revealBtn">운명의 공개 🎯</button></div>
+      <div class="balls" id="revealBalls" style="margin-top:14px"></div>
+      <div id="revealSets"></div>
+      <div id="revealSummary"></div>
+    </div>
+  </section>
+
+  <!-- ③-일: 쉼표 -->
+  <section class="panel" data-p="3">
+    <div class="card">
+      <span class="badge">일 · 쉼표</span>
+      <h2>이번 주를 돌아보며</h2>
+      <div id="retro"></div>
+    </div>
+    <div class="card">
+      <h2>렌즈 리그 🏆</h2>
+      <p class="muted">어느 렌즈가 정말 잘 맞히는지 <b>정직하게</b> 겨뤄 봅니다. 백테스트는 과거 각 회차를 <b>그 이전 데이터만</b>으로 예측해 실제 결과와 비교하는 방식(walk-forward)이고, '대조군'은 완전 무작위예요. 무작위라면 모든 렌즈의 평균은 0.8개 근처에 모이고, 실행할 때마다 순위가 바뀝니다.</p>
+      <div class="row"><select id="btRounds"><option value="50">최근 50회</option><option value="100" selected>최근 100회</option><option value="200">최근 200회</option></select><button id="btBtn">백테스트 실행</button></div>
+      <div class="bar"><i id="btBar"></i></div>
+      <div id="btOut"></div>
+      <h2 style="margin-top:18px;font-size:1.05rem">나의 실전 리그</h2>
+      <div id="myLeague" class="muted"></div>
+    </div>
+    <div class="card">
+      <h2>설렘 적금 & 기록</h2>
+      <div class="stat" id="stats"></div>
+      <table id="history" style="margin-top:10px"></table>
+    </div>
+  </section>
+
+  <!-- ④ 설정 -->
+  <div class="card">
+    <h2>예산 가드</h2>
+    <p class="muted">설렘이 부담이 되지 않도록 일주일 예산을 정해 두세요. 예산을 넘는 구매 표시는 막혀요.</p>
+    <div class="row"><input id="budgetIn" type="number" min="1000" step="1000" style="max-width:160px"><span class="muted">원 / 주</span><button class="ghost" id="budgetSave">저장</button></div>
+  </div>
+  <div class="card">
+    <h2>당첨번호 데이터</h2>
+    <p class="muted" id="dataTxt"></p>
+    <label>최신 CSV로 갱신 (동행복권 원본·표준 컬럼·추첨일 포함 형식 자동 인식, CP949 지원)</label>
+    <input type="file" id="csvIn" accept=".csv,.txt">
+  </div>
+
+  <footer>
+    로또 6/45의 1등 확률은 어떤 번호든 <b>8,145,060분의 1</b>이며, 어떤 렌즈도 당첨 확률을 높이지 않습니다.<br>
+    패턴·궁합·마르코프 등 통계 렌즈는 과거 기록의 경향을 보여 줄 뿐, 백테스트에서 무작위보다 낫다는 근거는 확인되지 않았습니다.<br>
+    인기 조합 회피는 당첨 시 <b>나눠 가질 가능성</b>을 줄이는 추정 모델이며 수익을 보장하지 않습니다.<br>
+    로또는 만 19세 이상만 구매할 수 있습니다. 도박 문제로 힘드시면 <b>☎ 1336</b> (한국도박문제예방치유원, 24시간)<br>
+    일주일의 설렘 v0.2 · Oseong Vibe Coding EduHub · Creative Director K.G.B.
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal"><div style="text-align:center"><img id="cardImg" alt="설렘 카드"><p class="muted">이미지를 길게 누르거나 우클릭해서 저장하세요</p><button class="ghost" id="modalClose">닫기</button></div></div>
+
+<script>
+/* =========================================================
+   ENGINE v0.2 — 화면과 무관한 순수 계산 모듈 (Node에서도 단독 테스트 가능)
+   구성: ① 확률표 ② 진정 난수 생성기 ③ 데이터 분석 ④ 군중 선호(인기도) 모델
+         ⑤ 균형 필터 ⑥ 렌즈 8종 생성기 ⑦ 유전 알고리즘 ⑧ walk-forward 백테스트
+   ========================================================= */
+const ENGINE = (() => {
+  /* ① 확률표: 6/45 조합론 */
+  const C45_6 = 8145060;
+  const COUNT = {1:1, 2:6, 3:228, 4:11115, 5:182780};
+  const P = {}; for (const k in COUNT) P[k] = COUNT[k] / C45_6;
+  const P_ANY = 194130 / C45_6;                                  // 무엇이든 당첨 ≈ 2.38%
+  const pAnyN = n => 1 - Math.pow(1 - P_ANY, n);
+  const EXPECT_MATCH = 36 / 45;                                  // 세트당 기대 일치 0.8개
+  const MATCH_SD = Math.sqrt(6 * (6/45) * (39/45) * (39/44));    // ≈ 0.784
+
+  /* ② 진정 난수 결합 생성기: SHA-256 씨앗 xoshiro128** ⊕ crypto.getRandomValues */
+  class Rng {
+    constructor(seed32) {
+      const v = new DataView(seed32.buffer, seed32.byteOffset, 32);
+      this.s = [v.getUint32(0), v.getUint32(4), v.getUint32(8), v.getUint32(12)];
+      if (this.s.every(x => x === 0)) this.s[0] = 1;
+      this.buf = new Uint32Array(256); this.i = 256;
+    }
+    xo() {
+      const s = this.s, m = Math.imul(s[1], 5), r = Math.imul((m << 7) | (m >>> 25), 9) >>> 0, t = s[1] << 9;
+      s[2] ^= s[0]; s[3] ^= s[1]; s[1] ^= s[2]; s[0] ^= s[3]; s[2] ^= t; s[3] = (s[3] << 11) | (s[3] >>> 21);
+      return r;
+    }
+    u32() { if (this.i >= 256) { crypto.getRandomValues(this.buf); this.i = 0; } return (this.xo() ^ this.buf[this.i++]) >>> 0; }
+    float() { return this.u32() / 4294967296; }
+    int(n) { const lim = Math.floor(0x100000000 / n) * n; let x; do { x = this.u32(); } while (x >= lim); return x % n; }
+    combo() {
+      const a = Array.from({length:45}, (_, i) => i + 1);
+      for (let i = 0; i < 6; i++) { const j = i + this.int(45 - i); [a[i], a[j]] = [a[j], a[i]]; }
+      return a.slice(0, 6).sort((x, y) => x - y);
+    }
+    // 가중치 비례 비복원 추출 (w[1..45], 제외 집합)
+    weighted(w, k, chosen = []) {
+      const out = chosen.slice();
+      while (out.length < k) {
+        let tot = 0; for (let n = 1; n <= 45; n++) if (!out.includes(n)) tot += w[n];
+        if (tot <= 0) break;                                   // 고를 수 있는 번호가 없으면 중단
+        let r = this.float() * tot, pick = -1, lastPos = -1;
+        for (let n = 1; n <= 45; n++) { if (out.includes(n) || w[n] <= 0) continue; lastPos = n; r -= w[n]; if (r <= 0) { pick = n; break; } }
+        if (pick < 0) pick = lastPos;                          // 부동소수 오차 대비: 마지막 후보
+
+        if (!out.includes(pick)) out.push(pick);
+      }
+      return out.sort((a, b) => a - b);
+    }
+  }
+  const randomSeed = () => { const s = new Uint8Array(32); crypto.getRandomValues(s); return s; };
+
+  /* 데이터 압축: 번호 1~45를 문자 하나로 (6글자 = 1회차) */
+  const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrs';
+  const decode = str => { const o = []; for (let i = 0; i + 6 <= str.length; i += 6) o.push(Array.from(str.slice(i, i + 6), c => ALPHA.indexOf(c) + 1).sort((a, b) => a - b)); return o; };
+  const encode = H => H.map(d => d.map(n => ALPHA[n - 1]).join('')).join('');
+
+  /* ③ 데이터 분석: 번호별 5종 통계 + 궁합수 + 전이 행렬
+     각 통계를 '순위'로 0~1 정규화한 뒤 평균 → 패턴 점수 (단위가 다른 지표를 공정하게 합치기 위함) */
+  function analyze(H, recentN = 50) {
+    const N = H.length, freq = Array(46).fill(0), rec = Array(46).fill(0), last = Array(46).fill(-1), r5 = Array(46).fill(0);
+    const pair = Array.from({length:46}, () => new Float64Array(46));
+    const trans = Array.from({length:46}, () => new Float64Array(46));
+    H.forEach((d, i) => {
+      for (const x of d) { freq[x]++; last[x] = i; if (i >= N - recentN) rec[x]++; if (i >= N - 5) r5[x]++; }
+      for (let a = 0; a < 6; a++) for (let b = a + 1; b < 6; b++) { pair[d[a]][d[b]]++; pair[d[b]][d[a]]++; }
+      if (i > 0) for (const m of H[i - 1]) for (const n of d) trans[m][n]++;
+    });
+    const gap = Array(46).fill(0), mom = Array(46).fill(0), markov = Array(46).fill(0);
+    const lastDraw = H[N - 1] || [];
+    for (let n = 1; n <= 45; n++) {
+      gap[n] = N - 1 - last[n];
+      mom[n] = rec[n] / Math.min(recentN, N) - freq[n] / N;
+      for (const m of lastDraw) markov[n] += freq[m] ? trans[m][n] / freq[m] : 0;
+    }
+    const rankNorm = arr => {                       // 동점은 평균 순위
+      const idx = Array.from({length:45}, (_, i) => i + 1).sort((a, b) => arr[a] - arr[b]);
+      const out = Array(46).fill(0); let i = 0;
+      while (i < 45) { let j = i; while (j + 1 < 45 && arr[idx[j + 1]] === arr[idx[i]]) j++; for (let k = i; k <= j; k++) out[idx[k]] = ((i + j) / 2) / 44; i = j + 1; }
+      return out;
+    };
+    const F = { freq: rankNorm(freq), recent: rankNorm(rec), gap: rankNorm(gap), mom: rankNorm(mom), markov: rankNorm(markov) };
+    const pattern = Array(46).fill(0);
+    for (let n = 1; n <= 45; n++) pattern[n] = (F.freq[n] + F.recent[n] + F.gap[n] + F.mom[n] + F.markov[n]) / 5;
+    let pairTot = 0; for (let a = 1; a <= 45; a++) for (let b = a + 1; b <= 45; b++) pairTot += pair[a][b];
+    const nums = Array.from({length:45}, (_, i) => i + 1);
+    const hot = nums.slice().sort((a, b) => rec[b] - rec[a] || freq[b] - freq[a]).slice(0, 10);
+    const cold = nums.slice().sort((a, b) => gap[b] - gap[a]).slice(0, 10);
+    const topPairs = [];
+    for (let a = 1; a <= 45; a++) for (let b = a + 1; b <= 45; b++) topPairs.push([a, b, pair[a][b]]);
+    topPairs.sort((x, y) => y[2] - x[2]);
+    return { N, freq, rec, gap, mom, markov, F, pattern, pair, pairAvg: pairTot / 990, hot, cold, r5, lastDraw, topPairs: topPairs.slice(0, 40) };
+  }
+
+  /* ④ 군중 선호(인기도) 모델 — 사람들이 많이 고르는 특징일수록 점수 ↑ */
+  function crowdScore(n, lastDraw) {
+    let s = 0;
+    for (const x of n) {
+      if (x <= 31) s += 0.10; if (x <= 12) s += 0.04;
+      if (x === 7) s += 0.15; else if (x === 3) s += 0.06; else if (x === 17 || x === 27) s += 0.04;
+    }
+    let run = 1, maxRun = 1;
+    for (let i = 1; i < 6; i++) { run = n[i] === n[i-1] + 1 ? run + 1 : 1; maxRun = Math.max(maxRun, run); }
+    if (maxRun >= 3) s += 0.5 * (maxRun - 2);
+    const d = n[1] - n[0]; if (n.every((x, i) => i === 0 || x - n[i-1] === d)) s += 2.5;
+    const tail = {}; n.forEach(x => tail[x % 10] = (tail[x % 10] || 0) + 1);
+    const mt = Math.max(...Object.values(tail)); if (mt >= 3) s += 0.35 * (mt - 2);
+    const col = {}, row = {};
+    n.forEach(x => { col[(x-1)%7] = (col[(x-1)%7]||0) + 1; row[Math.floor((x-1)/7)] = (row[Math.floor((x-1)/7)]||0) + 1; });
+    const mc = Math.max(...Object.values(col)), mr = Math.max(...Object.values(row));
+    if (mc >= 4) s += 0.5 * (mc - 3); if (mr >= 4) s += 0.5 * (mr - 3);
+    if (lastDraw && lastDraw.length) s += 0.3 * n.filter(x => lastDraw.includes(x)).length;
+    return s;
+  }
+  const LAMBDA_AVG = 10;                                   // 가정: 평균 조합의 1등 공동 당첨자 약 10명
+  const share = l => l < 1e-9 ? 1 : (1 - Math.exp(-l)) / l;   // E[1/(1+K)], K~Poisson(λ)
+  function buildBaseline(rng, lastDraw, N = 20000) {
+    const sc = new Float64Array(N); let wsum = 0;
+    for (let i = 0; i < N; i++) { sc[i] = crowdScore(rng.combo(), lastDraw); wsum += Math.exp(sc[i]); }
+    const meanW = wsum / N; let shSum = 0;
+    for (let i = 0; i < N; i++) shSum += share(LAMBDA_AVG * Math.exp(sc[i]) / meanW);
+    return { sorted: Array.from(sc).sort((a, b) => a - b), meanW, avgShare: shSum / N, lastDraw };
+  }
+  function percentile(base, s) {
+    let lo = 0, hi = base.sorted.length; while (lo < hi) { const m = (lo + hi) >> 1; base.sorted[m] < s ? lo = m + 1 : hi = m; }
+    let eq = lo; while (eq < base.sorted.length && base.sorted[eq] === s) eq++;
+    return (lo + (eq - lo) / 2) / base.sorted.length;
+  }
+  const payoutMult = (base, s) => share(LAMBDA_AVG * Math.exp(s) / base.meanW) / base.avgShare;
+
+  /* ⑤ 균형 필터: 역대 당첨번호의 '흔한 모양' (방법론 1) */
+  function balance(n, A) {
+    const fails = [], sum = n.reduce((a, b) => a + b, 0);
+    if (sum < 120 || sum > 180) fails.push('합계');
+    const odd = n.filter(x => x % 2).length; if (odd < 2 || odd > 4) fails.push('홀짝');
+    const hi = n.filter(x => x >= 23).length; if (hi < 2 || hi > 4) fails.push('고저');
+    const diffs = new Set(); for (let a = 0; a < 6; a++) for (let b = a + 1; b < 6; b++) diffs.add(n[b] - n[a]);
+    const ac = diffs.size - 5; if (ac < 7) fails.push('AC');
+    let cons = 0; for (let i = 1; i < 6; i++) if (n[i] === n[i-1] + 1) cons++; if (cons > 1) fails.push('연번');
+    const tail = {}; n.forEach(x => tail[x % 10] = (tail[x % 10] || 0) + 1); if (Math.max(...Object.values(tail)) > 2) fails.push('끝수');
+    if (new Set(n.map(x => Math.min(4, Math.floor((x - 1) / 10)))).size < 3) fails.push('번호대');
+    if (A && n.some(x => A.r5[x] >= 2)) fails.push('과열');          // 최근 5회 2번 이상 나온 번호 배제
+    return { ok: !fails.length, fails, sum, odd, hi, ac };
+  }
+  // 조건을 만족할 때까지 다시 뽑기 (최대 tries번, 실패 시 가장 덜 어긋난 것)
+  function retry(make, A, tries = 400) {
+    let best = null, bestF = 99;
+    for (let t = 0; t < tries; t++) { const c = make(); const b = balance(c, A); if (b.ok) return c; if (b.fails.length < bestF) { best = c; bestF = b.fails.length; } }
+    return best;
+  }
+  const overlap = (a, b) => a.filter(x => b.includes(x)).length;
+  const distinctPush = (out, c) => { if (!out.some(o => overlap(o, c) >= 3 || o.join() === c.join())) { out.push(c); return true; } return false; };
+  const meanPattern = (c, A) => c.reduce((s, x) => s + A.pattern[x], 0) / 6;
+  function synergy(c, A) {
+    let s = 0; for (let a = 0; a < 6; a++) for (let b = a + 1; b < 6; b++) s += A.pair[c[a]][c[b]];
+    return Math.min(1, (s / 15) / (A.pairAvg * 2));
+  }
+
+  /* ⑥ 렌즈 8종: 같은 질문("어떤 6개?")에 서로 다른 관점으로 답하는 생성기 */
+  const LENS = {
+    // 회피: 후보 중 인기 하위 3% 풀에서 무작위 (모두가 같은 '최적'에 몰리지 않게)
+    avoid(rng, ctx, k) {
+      const cand = [], N = ctx.candN || 30000;
+      for (let i = 0; i < N; i++) { const c = rng.combo(); cand.push({ c, s: crowdScore(c, ctx.lastDraw) }); }
+      cand.sort((a, b) => a.s - b.s);
+      const pool = cand.slice(0, Math.max(50, Math.floor(N * 0.03))), out = [];
+      for (let t = 0; out.length < k && t < 3000; t++) distinctPush(out, pool[rng.int(pool.length)].c);
+      return out;
+    },
+    // 선호: 내가 고른 번호 중심 + 빈자리는 인기 낮은 번호로 채워 몫 보호
+    fav(rng, ctx, k) {
+      const f = (ctx.fav || []).slice().sort((a, b) => a - b), out = [];
+      if (!f.length) return out;
+      const only = Array(46).fill(0).map((v, i) => f.includes(i) ? 1 : 0);
+      for (let t = 0; out.length < k && t < 300; t++) {
+        let c = f.length > 6 ? rng.weighted(only, 6) : f.slice();
+        if (c.length < 6) {                       // 빈자리: 후보 40개 중 인기 가장 낮은 채움
+          let best = null, bs = 1e9;
+          for (let j = 0; j < 40; j++) { const x = rng.weighted(Array(46).fill(1), 6, c); const sc = crowdScore(x, ctx.lastDraw); if (sc < bs) { bs = sc; best = x; } }
+          c = best;
+        }
+        // 선호 번호는 겹치는 게 당연하므로 '완전히 같은 세트'만 막음
+        if (!out.some(o => o.join() === c.join())) out.push(c);
+      }
+      return out;
+    },
+    // 패턴: 빈도·최근빈도·갭·모멘텀·마르코프 5종 앙상블 점수에 비례 추출 + 균형 필터
+    pattern(rng, ctx, k) {
+      const w = ctx.A.pattern.map(p => Math.exp(4 * p)), out = [];
+      for (let t = 0; out.length < k && t < 50; t++) distinctPush(out, retry(() => rng.weighted(w, 6), ctx.A));
+      return out;
+    },
+    // 균형: 합계·홀짝·고저·AC·연번·끝수·번호대·과열 8중 필터를 통과한 무작위
+    balance(rng, ctx, k) {
+      const out = [];
+      for (let t = 0; out.length < k && t < 50; t++) distinctPush(out, retry(() => rng.combo(), ctx.A, 2000));
+      return out;
+    },
+    // 핫·콜드: 최근 50회 뜨거운 번호 3 + 오래 쉰 번호 2 + 나머지 1 (평균 회귀 가정)
+    hotcold(rng, ctx, k) {
+      const { hot, cold } = ctx.A, out = [];
+      const coldOnly = cold.filter(x => !hot.includes(x));
+      const make = () => {
+        const one = (arr, w = Array(46).fill(0)) => { arr.forEach(x => w[x] = 1); return w; };
+        let c = rng.weighted(one(hot), 3);
+        c = rng.weighted(one(coldOnly.length >= 2 ? coldOnly : cold), 5, c);
+        return rng.weighted(Array(46).fill(1), 6, c);
+      };
+      for (let t = 0; out.length < k && t < 50; t++) distinctPush(out, retry(make, ctx.A));
+      return out;
+    },
+    // 궁합수: 역대 동반 출현이 많은 쌍에서 출발해, 함께 자주 나온 번호를 이어 붙임
+    pair(rng, ctx, k) {
+      const A = ctx.A, out = [];
+      const make = () => {
+        const p = A.topPairs[rng.int(A.topPairs.length)], c = [p[0], p[1]];
+        while (c.length < 6) {
+          const sc = []; for (let n = 1; n <= 45; n++) if (!c.includes(n)) sc.push([n, c.reduce((s, x) => s + A.pair[n][x], 0)]);
+          sc.sort((a, b) => b[1] - a[1]); c.push(sc[rng.int(5)][0]);
+        }
+        return c.sort((a, b) => a - b);
+      };
+      for (let t = 0; out.length < k && t < 80; t++) distinctPush(out, retry(make, ctx.A, 150));
+      return out;
+    },
+    // 마르코프: 지난 회차 번호들 다음에 자주 나왔던 번호(전이 확률) 비례 추출
+    markov(rng, ctx, k) {
+      const w = ctx.A.F.markov.map(p => Math.exp(3.5 * p)), out = [];
+      for (let t = 0; out.length < k && t < 50; t++) distinctPush(out, retry(() => rng.weighted(w, 6), ctx.A));
+      return out;
+    },
+    // 종합: 위 기준을 모두 적합도로 묶은 유전 알고리즘
+    ga(rng, ctx, k) { return geneticSearch(rng, ctx, k); },
+    // 대조군: 완전 무작위 (백테스트 비교용)
+    random(rng, ctx, k) { const out = []; while (out.length < k) distinctPush(out, rng.combo()); return out; }
+  };
+
+  /* ⑦ 유전 알고리즘(방법론 2·5): 적합도 = 패턴 35% + 궁합 20% + 비인기 30% + 균형 15%
+     교차: 두 부모 번호의 합집합에서 6개 무작위 / 돌연변이: 한 개를 무작위 번호로 교체 / 엘리트 보존 */
+  function fitness(c, ctx) {
+    const pop = ctx.base ? 1 - percentile(ctx.base, crowdScore(c, ctx.lastDraw)) : 0.5;
+    return 0.35 * meanPattern(c, ctx.A) + 0.20 * synergy(c, ctx.A) + 0.30 * pop + (balance(c, ctx.A).ok ? 0.15 : 0);
+  }
+  function geneticSearch(rng, ctx, k, P = ctx.gaP || 120, G = ctx.gaG || 35) {
+    let pop = Array.from({length:P}, () => { const c = rng.combo(); return { c, f: fitness(c, ctx) }; });
+    const hall = pop.slice();                 // 명예의 전당: 진화 전 과정의 모든 해
+    const pick = () => { let b = pop[rng.int(P)]; for (let i = 0; i < 2; i++) { const x = pop[rng.int(P)]; if (x.f > b.f) b = x; } return b; };
+    for (let g = 0; g < G; g++) {
+      pop.sort((a, b) => b.f - a.f);
+      const next = pop.slice(0, 8);
+      while (next.length < P) {
+        const u = [...new Set([...pick().c, ...pick().c])];
+        let c = rng.weighted(Array(46).fill(0).map((v, i) => u.includes(i) ? 1 : 0), Math.min(6, u.length));
+        if (c.length < 6) c = rng.weighted(Array(46).fill(1), 6, c);
+        if (rng.float() < 0.35) { const i = rng.int(6); let n; do { n = 1 + rng.int(45); } while (c.includes(n)); c[i] = n; c.sort((a, b) => a - b); }
+        const ind = { c, f: fitness(c, ctx) }; next.push(ind); hall.push(ind);
+      }
+      pop = next;
+    }
+    pop.sort((a, b) => b.f - a.f);
+    // 같은 데이터면 누구나 같은 최적해에 수렴 → 공유 시 모두 같은 번호가 되는 문제
+    // 그래서 상위권의 서로 다른 해 최대 30개를 모은 뒤, 그중에서 무작위로 k개를 고름
+    hall.sort((a, b) => b.f - a.f);
+    const seen = new Set(), elite = [];
+    for (const x of hall) { const key = x.c.join(); if (seen.has(key)) continue; seen.add(key); if (distinctPush(elite, x.c) && elite.length >= 60) break; }
+    const out = [];
+    for (let t = 0; out.length < k && elite.length && t < 200; t++) distinctPush(out, elite.splice(rng.int(elite.length), 1)[0]);
+    // 수렴해서 다양한 답이 부족하면: 상위 해를 돌연변이시켜 적합도 높은 이웃을 찾아 채움
+    for (let t = 0; out.length < k && t < 2000; t++) {
+      const c = pop[rng.int(10)].c.slice(); for (let m = 0; m < 3; m++) { const i = rng.int(6); let n; do { n = 1 + rng.int(45); } while (c.includes(n)); c[i] = n; }
+      c.sort((a, b) => a - b); if (fitness(c, ctx) > pop[P - 1].f) distinctPush(out, c);
+    }
+    while (out.length < k) distinctPush(out, rng.combo());
+    return out;
+  }
+
+  /* 세트 꾸미기: 모든 세트에 같은 잣대(패턴·균형·인기도·몫)를 붙여 비교 가능하게 */
+  function decorate(nums, lens, ctx) {
+    const s = crowdScore(nums, ctx.lastDraw);
+    return { nums, lens, pct: percentile(ctx.base, s), mult: payoutMult(ctx.base, s),
+      pat: ctx.A ? meanPattern(nums, ctx.A) : null, bal: balance(nums, ctx.A).fails };
+  }
+  function generateAll(rng, ctx, perLens, lensIds) {
+    const out = [];
+    for (const id of lensIds) for (const c of LENS[id](rng, ctx, perLens)) out.push(decorate(c, id, ctx));
+    return out;
+  }
+
+  /* ⑧ walk-forward 백테스트: t회차를 '그 이전 데이터만'으로 생성해 실제 결과와 비교 (미래 정보 누설 없음) */
+  function backtestStep(H, t, rng, base, lensIds, k) {
+    const A = analyze(H.slice(0, t)), ctx = { A, base, lastDraw: A.lastDraw, candN: 3000, gaP: 70, gaG: 20 };
+    const res = {};
+    for (const id of lensIds) res[id] = LENS[id](rng, ctx, k).map(c => overlap(c, H[t]));
+    return res;
+  }
+
+  /* 렌즈 리그 통계: 같은 회차 세트끼리는 상관되므로 '회차 평균'을 표본 단위로 사용
+     z → 양측 p값 → Holm-Bonferroni 보정(렌즈를 여러 개 비교하면 우연히 1등이 나오는 착시 방지) */
+  const normCdf = z => { const t = 1 / (1 + 0.2316419 * Math.abs(z)), d = 0.3989423 * Math.exp(-z * z / 2);
+    const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return z > 0 ? 1 - p : p; };
+  function league(perRound) {          // perRound: { lens: [[회차별 일치 배열], ...] }
+    const rows = [];
+    for (const id in perRound) {
+      const r = perRound[id].filter(a => a.length).map(a => a.reduce((x, y) => x + y, 0) / a.length);
+      if (!r.length) continue;
+      const n = r.length, mean = r.reduce((a, b) => a + b, 0) / n;
+      const sd = n > 1 ? Math.sqrt(r.reduce((a, b) => a + (b - mean) ** 2, 0) / (n - 1)) : MATCH_SD;
+      const z = (mean - EXPECT_MATCH) / (Math.max(sd, 1e-9) / Math.sqrt(n));
+      rows.push({ id, n, sets: perRound[id].reduce((a, b) => a + b.length, 0), mean, z, p: 2 * (1 - normCdf(Math.abs(z))) });
+    }
+    const cmp = rows.filter(r => r.id !== 'random').sort((a, b) => a.p - b.p);
+    cmp.forEach((r, i) => { r.holm = Math.min(1, r.p * (cmp.length - i)); if (i) r.holm = Math.max(r.holm, cmp[i - 1].holm); });
+    return rows.sort((a, b) => b.mean - a.mean);
+  }
+
+  function rank(nums, win, bonus) {
+    const m = overlap(nums, win);
+    if (m === 6) return { m, r: 1 }; if (m === 5 && bonus && nums.includes(bonus)) return { m, r: 2 };
+    if (m === 5) return { m, r: 3 }; if (m === 4) return { m, r: 4 }; if (m === 3) return { m, r: 5 };
+    return { m, r: 0 };
+  }
+  const PRIZE = { 4: 50000, 5: 5000 };
+  async function sha256(bytes) { return new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)); }
+  const hex = b => Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+
+  return { C45_6, P, P_ANY, pAnyN, EXPECT_MATCH, MATCH_SD, Rng, randomSeed, decode, encode, analyze, crowdScore,
+    buildBaseline, percentile, payoutMult, balance, LENS, geneticSearch, decorate, generateAll, backtestStep, league, rank, PRIZE, sha256, hex, overlap };
+})();
+if (typeof module !== 'undefined') module.exports = ENGINE;
+
+</script>
+<script>
+/* =========================================================
+   DATA: 제1~1250회 당첨번호 내장 (번호 1~45를 문자 1개로 압축, 6글자 = 1회차)
+   출처: kkbhong71/lotto-ultimate 저장소 data/latest.csv
+   ========================================================= */
+const EMBED = 'JWcgknIMUYfpKPSUaeNadenpPXcnopNOZanpBIPYZnHSYhkmBDPQjmIYdgorAGjkopBKUYmsVWYklpBFLegnCDPdekFGXklnCDIQfkCLMSfiFdlmnqJNRTWdFLQRefDEFHQmEMQRgpGHacjqBDUZqrDEGRTYATZbkqIRWYikAEMhmnHQTijrGIRWbiFNSYhrDGfgnoIZiknpBCKZkqAJWZbnGadgikPQVdkqFGMOUqGMRSYZMTWilqQRSUWfFeilmrCKUdlsAJTagiHMOWelNQZejsFJRZklDGPSgnBJLOVrBCKPZrBDOPTcGHNfgmAHUajmQUeknrJNdegkGJPYcrJXYgnrFcjmosBHYjmpNOSdlqCHOaciCTWjlnNORUZjDYgjnqBCGQVXCGJOjlJLOPZmEHNOSmESVYbqEILPcoBDKQZaCLRfnqFOQRinBEXfhrACOVYkBRcfqrJMYcgiCLXadfQRXYZdEGKMTgABCNapFJOQShPWahpsFHMWejBLkmosDLPWhqAQTXdoDZbcgnQTcilrAUXZcpCNXgijFVXjlrEfhnosHQaehqACHUVeFGNOTjFIPWXfACJackAGKWkpACQfisQVXZinENOadsQfghprHJThosDJLVXgADEFIeGRVWcrAEhjprGTVWcqGRegjnZcdgopDIbgjsKNSZboABFIYbBDYehkEJVhjrCDJQSVCKMNQUDFJKfkLbdhlqAKPQjnGQRbdsDPWYcpBHfgijGTVanqCEJcfqLdhjksSWYblpGSXapsHJKNOUCQWhosDGORWZCLTWeiFNVbimBPdjopGITYjmJKabkmIKOTbqCMQRSbHLcepqLPdhnrZabpqsDOQZjkBCMTarBSaiopDFMUnpUYghijBKUhopBRYbkmABJMRSAEMZchCHKLMjFSUinsPSTfgoERbdpsSZdgimDIMRUhARdopqCGHhmoVhjnpsAEUYloGKZbcrFIJKmoEMRSVpILajmsXabdjmCJenpqPaikqsBKMOepDPYchiDSUXZoCIXdghMNRVimSZbegjDQdfghAJMPkqAEKLRWEIQYmqBOTUchNUWfnsMOachnBRXhnpABFPTgABDHSlDJNSUsABHRclSXadehHNfiksHNRderEFXYfkDHKRksFNRZjmOTWZmrGJSVinijkorsGLPhpsLSTYosNUVYdjEFMNQTCKXlmrLNagmrACKXdfCLNinsACUcikABCOTYCKNefkNYehnrBGRTXgJSVWYkLMQTgoKLRUelBCDETXEGTYbkBCGOqrGPQgjnPTagimAHNRcrDKTZikEKSUhqBTgiknEGbcmqACRTZaDSZadpEKMSejBFHNUVDEOPVpQYijmrDEIKWlEKNcfgEJSersHIJLXrDFMQbnMUVXZkUVZaekADHMkmAKQUXrBDObehKOXmorFJPnoqBPXabiDSTUfhBLQSbpMPYjklIKaeflMRUWZmLObjmnCHQWlsCHaeorSWdkqsFGSYblNWZemsHSYehjAESTXdAEFXapDKNUWqFMaefkNadelnDENipsGLOXknFKPReqILXYceAabfknIPajorEIhklmCDIKVpGHXhjoCJSXfsERTjpqEILTUZCHIacnGILamqAHXehrMNOZimNSTilnDOUgmoJLMOYcCKkmoqGPejklJKWXjkACDFNoBEJRefFHRelsBGOXdsMgknosAOSnprFLXaikALQbioCNgklpHMRfmsCGHRTpQRefghAIQUcgFJQdklADLPRlCHOadsFKSTbfEIacknACTYjsGIJLZlGKMgkqMSTflpBNQdlsDJPZgoGHRUWmDRWdhoEOUWYsNOQSksABEKRjAESbhoDLXabfBCEFLTIQhiqsOQShloAMgiqsJKUaemCJKVjmBQSThsEHVbgpPSWYosLRTUYhIRcflqJNOfjpBDUYgjGQTfrsPWYgjmFLMQfrAFIPQbIQSdipCDPQSTDINZerPQhjpsENadmqMOUcmqEIPWZsCEThirAENRfkBMhlpsFHNUdkRXZchlAHShmqAMNghqAJQceqABObhsOTWcmpEMNVrsCHMafpCNQTXeEMNTXYAHRXcgEYachjEPQTZoKPSVcjNSjqrsEHcdirBHNYcsJNRUjkAIJLUnAJSTXnDPWYinEJPXaiBCVadnKLNUflBEGNPnEOUYZdELSZarCVYcfrKUXdmsQTijoqPRXprsGIOZapHKNPRUOZkpqsKMOQYhDHSYasAKMXbnFVckqsEVcehmFJVeinABHQZkAEJLPTJOVXapDObgknKVXfjlGLSUcfDGJSenAZehnqAHIQcfGPRTWZPQbkmnJKRVbmACGHXpIPbnoqAMTVYbKOTZeiRTehnsLMQVYgJOTWprABIQSpIUahoqFLRelqEIOSVjJNVXbkETUXgnABJYZrGLUXajFGMPXYITUVdkFIUefnACRfnoKNVikmDGmopsBIOWhnBNOVWrGQTZdnEFHKVZDENTVqKMOZbhBKMNbdDIJcehFKZabrHOSUhrAQabcnJKZehrHJNaglDQRamqFGOXbdLPSVknCWbhmpACPRdhRVYelsBCEKamSWcgiqCMTXgkHPZdlsINTVghKPclorFLTZclQTdeknJVbhjrAWbdhiYacjlnDFJSTrKMWiqsMTUdmsAKLNZiBGHIQgCGManoCJTZiqFNSUWeLOTXdlHJRdfhLXglnpMYahloDSTZdiAGLRWaHJRWanDIJfjnDFJNYnHKbdqsKRZeknCTXfksWceghrFLOhprAHKMVlDJMWfrBLNQXnHMObkqDUVhklJPTmopFMckmoPYZejqHMTVWjDMRegsAINPUcILMOklNYcfgsRcdkmqHWYairCEJQdeCDWcnoAJPXYiLOSVbhACabfsQVZajmABWYlnDHYakoBHQdelBDHOTaBGZcnqHQijmpVaeiknTVZgjkEGHOdqDMVahrDMTcjoSTWXqrMNXfmoETWainCDLTXhADJQepFVbfhnAEadhjFNVZqrGTVYlnFIKVXdLMfgnoEaehiqLYcipqLcfgmnCGNWZpDEIMZaEHUWagAOTZipBKLOWkBHWoqrAILbjoNWdfhlFHMPdqDVablnCGRcfjDEMNkoADklnsJKclosKWZcmrGNQTimALVfgpEQYemnRTXaepPWacgoAEIUaiPQWXcrINOQegJXZcklKLNORmGHRfkqLWZdjqFJRefhCSVepqCLMOhjHMZbfhEFSZosMRZehrEQUYjrDXYahiHQTakqFGOVhmALMUfsceilnrAGNThkCFTXarAJTfinBGQbcmMNQfopKQUXZjLTWbdrDTZbinLOSZnqKLYfrsADTWcsEGRkpsDKMQTeEJPQefNSYZahDJRansDEFYZqAJOPfoACQTerCFMWXiALZacgKRUZlqCMRgksBDThiqNOPSYqBHTdghJKOYioPQVehkELNfhpEGTVkpEGIKfiCENTprBLNgnoHQagnrGRdmnoFGJPloBGLOUhNUcefkBHOVYoFHbglmTdjlosHMNdlmBEFMbrIJMXglBHMYbkHXbilnCDLNYqHJWXiqDLXglsELQchiEKNacjBPSehiMNVadlBSYZaqBFRUghABGIJlAEFNTmHNWjlmDHRSmrDHahmnNRTWbjBVagjkFIRSYgGHKPorHUYmnrJQRSWaEMRWnsDEKLXaHPYdpqFHMdinBPQfmsABFPSpIOPUbhGMdmosAGSZaiCFGTUmMNZgnqBIVYesAGLOWpSbelqrHQUXaeABDWehORUfirILSTmoDJKLTaKMYZcgFGOPTeCPVklrGRVXehFOVWYfNORUZiKRUjkqHQRXmsOXefgnEMQWbjADPZnoBIXoqsEPUWXdMSbklqCUVgopCDGKeoKLPZcrCMOnorEFZalmPUZejqGklmnrCGNPenJNSmnqHSYbfjGRSacpDIWgmrBCLTalEFIKOkCEHSlpJTgjorEFKQlrBDFKQbOQYkpqLNOXafGHTcglKRZanoGIJMeiHUbejsGJQcgrIJNYaeAHKORsAHQhmsLOXjorDEFLYkCEGNZhDJScfpUXacqrQWailqFMTabnAKOQYmFGLblnGLOXYqAHJMbpEOVWhiGQSdjlXYghlmOagiqsCKNOfjAFKbhpGOTYgqDRZghlAGPRhlBEHKgmCKMUgkDEHPUcKWbcdrCJNPjlCMPXZcJbegorADHWgpAFQVbsCDFJbdBLSXmrBJPShsJRdjmrCDIXYgKOXiksQTdegsBEORSWAGVgknBGagorBFMPcdBKSYbfDKTWfmDHMSTqALchjkAbioqrLNUdmqTdgijrBHgikoFGSUoqAKUWhrGHJSUeCFJdhkKQUZjsDJNORVBGMYpsBDEQafKXfginFPklosEJMakoBKQRUaMORXaoWablpqGVcghiDHIPQSEUahrsHJMjknOSUhorJORUhoABCILWCLgjpsGILNWbCJMVefLNXZhsABOSXjCDPTbrDPTgnqBQSXkoBHQXceMNZbdjJNPRabFGKQgrEILdmqIgjnpqJVaepqDGKXpsACLUZoCHPfhqGVXehjACHLpqIdhimoEOTehpGacdlrEGKPosAILWmqFJQRUcEFKNUoHLSUeiLORbhpKLcglpHIRUbnFLQUhkFUijkoFLSXhoOQSUasKPRSXmFRehlsNOPQlsCJWXemDFOYZgLOPTXdEFMPabBJKSimBFGLSsCHSadoBJLegpBGSYcjJOUilqFGRSdlCJMZhlAUZjnoEVefmsBJNVfjLQWhpsADJLbsQYbkqrJKLRXpEINZdqAJMZfjCLMRefNTWeklFJRYhiOUefoqFKOQWnEJMUmqHKSUjsACLNPqKdhiprBUblpsQUYZajLRScemCILMYqNOYbcdPYglnsJUVdipALMXcrIRTXajLRXZmnGIXchlHOUeglMPXYgjEKLcgrDGMcemDEeiqsEFPRklCJPSemMNSZnqLRdmopFHRipqIJMblsAIKNZbBYbdgsINQgjlCIKLMSBDKbcqEKNdglNZfjmpSUdghpGHMOgsAPcgnsERdoqsLPZbdpABPVlmEMQchmPTXbjmNRVZerKQbdgiBHWZarTYefjqHOQSqrJXnoqrFJPbhlIMflmqHVilmoDHRYafKQSUVYJhlnpqPUbimqCGJMYjCOVfgsIOchkmNQSVXnLQboqrBFTakmUYdfnpBFLZdhBDdfgqCELMgmAOSWbpSVdhmrEPUZhpEQRVWqBFKPYeADJNOiGQSWXsDRTZafRhmqrsIRfgkrDNWbksACXamsSWbkpsHNQajsCGLehlCMclmpADNRckIMbemoDIQRZpAOQWYoSfknoqPZelmoELYZlsFGLVZjRUbikpHSTUgmGMPRilERTWdhGSWXjmBOPUVbBFHZqsCDPalnBENbefUaclnrCPUVWrGXcdhiAKQaimDELNfpEHRUVlFNPUakPSXgprBFKMVkFUVfijACWXaqGKLeglINQRprBCZghqEGLVboBFMQaqCQRWjoCKhpqrMXfhmpJPRTYeDOVloqCDJTbrGILOSWHUYlmrNOWYiqAFOjklWacejsACdgjmDJTflrGKMQRcBJMVcnDHJPejDKbmpsCOTVXoLNYamnJLRipqAHMjrsBMPSfgIJOdgkIRSdhnCHQTaiMRdeloNUijnrCDOVbnBLdemqDLVXgoGIVakpAIZbdoDIWZcgJKTUYoDOXijnBIJPikANOXnoBRXdfsKTcegpARbehqFLSWhpFUjlmqBMYbcjAUYchkAFMklnBELNXmCIJcnsIKPUbjBFQRUZCFQWkmVZekopABKPmrGHIQVXDLNYikBIJNVrAGOfhpGKPUagCMPWXiajkoqsEGMTUrMWZeiqCJWijkQUWdhrGJPbopBDOWclBMTdeoQRUacgBDYZjkMRYegrLTZgrsFNPRXpACHXaiADMclmFKOXfmDGNPXrMQRTpsACINRbBHSVfpFJLNTpQYgilsADcmqsGOdkmrHMRXacHKOPQkHKPSUYIKdeorOWchnrILOYhjAILZilEKRTisUVZhjoCKNRZaNWegknOZbhopLRVWdhCSUYksADMQhmLaclosLOQXcsEFKcpsJNPRciIRTVlrHITYcgELMefoNPaimsEGLMRiLdfkmoBEKQXcFGVfijAFLSjpCKOTirZefglnINhiopBEVfhsBNOVagGPXakrBCFSjmHPZcejFGIKQRENOWhqCELVZeLQTZbjFNOSUoGPYcijBTgnprFLQUfmCEMTUkFLeilqUZdfgiEQZailVZcdhsNSabdsDGLNVgMTXfjsHMSansKWYdfnGJVYhnCJXglsDXaiksTefnosCFVWXlCFIRViCRSWfsFKPSUfGJSWbgDGSZgiAJRVbeCFNVdoABKUdiPRTWfqFRbdflAFTaboAWXirsCGIgjkDHQdnqFJKNjlDHRXksMPWejrAIPWXlUZafhpCGNOVlHLMcgpDGQRlrKPYaijMNRUhrKUVdmrDRekpqLSUcnsFTWXbdGRSZgsJQVdiqFGOVZnHNbchnALPSWqNghiknLPUXoqCTblnqQZcdeqFGMbjpMNVZklJLcenrAGUdilFPhkmnACDcpsFNdenoGSZkmrJLMSgnCGKTVoCMdgqsPTZjprKMTUfrJPSfglGLWfhjOPQYdeCDIdgjKMNOPsAILMTsBSZeloFXeflrCFUdhiMSUXhiCHQdghFNYgnrDEIKknJOXdekAEHPbgEJKQbhOSUYabABFNalFGSbhoMNTbchCGIMSXAFMSUgUgilprDILOgsNPSTchELOdknGJVcelGKLUZiBHbdkoJPQabjCDLOZhBKegkrFKQSnqGKXZakCFMOPVHOSUfjHIRimsBCIOacdefijkAIJMirDHVZflJPSakldehmosEGLTYZUYafklCIablmGMRjmsBLTXhpTUVYbcBMOPgqQRWYlmFGaclsNWYacpHWeimnIUXdgkELXZmpCMbhlpCFGKLQGIXnprAERTdiHKNQjmCDFHfpGIKUdiCGOPSqEFKaqrCPRXnrFLRknoHJNTgoAMUYbeDOQWajNPWYekFQVbcfBHMPWbEMZcknCDLSVaISciklGISWZsADKLToJPWjmnFIPSXbCMOXgkCOaghjHLOcnsAEGZbqZdglmoPXYdefABDPTfGIXaijELUgknCFRcimHPbderADPWeoACQZapJVXalsFadjlpBQTikmAGIQalWZailnEHYeorEKYajlJOSadgMOSUrsCJNOWXHJOTceCbefpsABObmsBVYbhqFMRbdjDKQVfoPRTfgmIRUarsHISYopDFMQZbANPhorXcdeirLMchkpCHIVbpDMNRelLOSVXjBGTYknAOSeiqFGKOmqLRUchlJTWhknBMRflpKMVfgjKMSTerGMPWXqBDJPeoIRXlqrAMRZhlDEYbfpPVWXabHNUVpsPRajlpBKPYhiAERWab';
+</script>
+<script>
+/* =========================================================
+   UI
+   ========================================================= */
+const $ = id => document.getElementById(id);
+const KST = 9 * 3600e3, DAY = 86400e3, WEEK = 7 * DAY;
+const BASE_ROUND = 1251, BASE_DRAW = Date.UTC(2026, 10, 21, 11, 35), BASE_MON = Date.UTC(2026, 10, 15, 15, 0);
+function weekInfo(now = Date.now()) {
+  const w = Math.floor((now - BASE_MON) / WEEK);
+  return { round: BASE_ROUND + w, draw: BASE_DRAW + w * WEEK, mon: BASE_MON + w * WEEK, dayIdx: Math.floor((now - BASE_MON - w * WEEK) / DAY) };
+}
+const DAYS = ['월','화','수','목','금','토','일'], PANEL_OF_DAY = [0,1,1,1,1,2,3];
+
+// 렌즈 안내: 근거의 성격을 태그로 정직하게 구분
+const LENSES = [
+  { id:'avoid',   ic:'🛡️', name:'회피',     tag:['pg','당첨 시 몫 ↑ · 수학적 근거'], desc:'대중이 덜 고르는 조합 하위 3% 안에서 무작위. 확률은 같지만 1등이면 나눠 가질 사람이 적어요.' },
+  { id:'fav',     ic:'💛', name:'선호',     tag:['py','나의 의미'],               desc:'내가 고른 선호 번호 중심. 빈자리는 비인기 번호로 채워 몫을 지켜요.' },
+  { id:'pattern', ic:'📈', name:'패턴',     tag:['pb','통계 경향'],               desc:'빈도·최근 50회 빈도·미출현 간격·모멘텀·마르코프 5종 점수 앙상블에 비례해 추출.' },
+  { id:'balance', ic:'⚖️', name:'균형',     tag:['pb','당첨번호의 흔한 모양'],      desc:'합계 120~180, 홀짝·고저 2:4~4:2, AC≥7, 연번 ≤1쌍, 끝수·번호대 분산, 최근 과열 번호 배제.' },
+  { id:'hotcold', ic:'🔥', name:'핫·콜드',  tag:['pb','평균 회귀 가정'],           desc:'최근 50회 뜨거운 번호 3 + 가장 오래 쉰 번호 2 + 나머지 1.' },
+  { id:'pair',    ic:'🤝', name:'궁합수',   tag:['pb','동반 출현 네트워크'],        desc:'역대 함께 자주 나온 번호 쌍에서 출발해, 궁합이 좋은 번호를 이어 붙여요.' },
+  { id:'markov',  ic:'🔗', name:'마르코프', tag:['pb','전이 확률'],               desc:'지난 회차 번호들 다음 회차에 자주 나왔던 번호에 가중치.' },
+  { id:'ga',      ic:'🧬', name:'종합 진화', tag:['py','모든 기준 통합'],          desc:'패턴 35%·궁합 20%·비인기 30%·균형 15%를 적합도로 묶어 유전 알고리즘으로 진화시킨 조합.' }
+];
+const LENS_NAME = Object.fromEntries(LENSES.map(l => [l.id, l.ic + ' ' + l.name])); LENS_NAME.random = '🎲 대조군(무작위)';
+
+/* ---------- 저장 ---------- */
+const KEY = 'seollem.v1';
+let S = { budget: 5000, rounds: {}, fav: [], perLens: 1, extra: {}, bt: null };
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+const W = weekInfo();
+const R = () => (S.rounds[W.round] = S.rounds[W.round] || { sets: [], dream: null, result: null, mission: false });
+
+/* ---------- 데이터: 내장 + (업로드/토요일 입력/자동 갱신) 병합 ---------- */
+const H0 = ENGINE.decode(EMBED);           // H0[i] = 제(i+1)회
+let H = H0, dataSrc = '내장';
+function rebuildH() {
+  H = H0.slice();
+  const ks = Object.keys(S.extra).map(Number).sort((a, b) => a - b);
+  for (const k of ks) if (k === H.length + 1) H.push(S.extra[k]);
+  $('dataTxt').innerHTML = `분석 데이터: 제1회 ~ 제<b>${H.length}</b>회 (${dataSrc}${H.length > H0.length ? ` + 추가 ${H.length - H0.length}회` : ''}). 토요일에 입력한 결과도 자동으로 더해져요.`;
+}
+// [CSV 안전 로더] 인코딩 자동 감지 → 컬럼명 우선 추출(유령 열 무시) → 휴리스틱 → 범위·중복·개수 검증
+function decodeBytes(buf) {
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch (e) { return new TextDecoder('euc-kr').decode(buf); }
+}
+function parseCSV(text) {
+  const lines = text.replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return [];
+  const delim = lines[0].includes('\t') ? '\t' : ',';
+  const head = lines[0].split(delim).map(h => h.trim().replace(/"/g, '').toLowerCase());
+  const ni = [1,2,3,4,5,6].map(i => head.findIndex(h => h === 'num' + i || h === 'n' + i || h === String(i) || h === '번호' + i));
+  const ri = head.findIndex(h => ['round', '회차', 'drwno', 'drw_no'].includes(h));
+  const out = [];
+  for (const line of lines.slice(ni.every(i => i >= 0) || ri >= 0 ? 1 : 0)) {
+    const cells = line.split(delim).map(c => c.trim().replace(/"/g, ''));
+    let round, nums;
+    if (ni.every(i => i >= 0)) { nums = ni.map(i => parseInt(cells[i], 10)); round = parseInt(cells[ri >= 0 ? ri : 0], 10); }
+    else {                                   // 휴리스틱: 날짜·금액을 건너뛰고, 회차 다음의 1~45 정수 6개
+      const ints = cells.filter(c => /^\d+$/.test(c.replace(/,/g, ''))).map(Number);
+      round = ints[0]; nums = ints.slice(1).filter(x => x >= 1 && x <= 45).slice(0, 6);
+    }
+    if (!(round > 0) || !nums || nums.length !== 6 || nums.some(x => !(x >= 1 && x <= 45)) || new Set(nums).size !== 6) continue;
+    out.push({ round, nums: nums.sort((a, b) => a - b) });
+  }
+  return out;
+}
+function mergeRows(rows, label) {
+  let added = 0, mismatch = 0;
+  for (const r of rows) {
+    if (r.round <= H0.length) { if (H0[r.round - 1].join() !== r.nums.join()) mismatch++; continue; }
+    if (!S.extra[r.round]) added++; S.extra[r.round] = r.nums;
+  }
+  save(); if (added) dataSrc = label; rebuildH();
+  return { added, mismatch };
+}
+$('csvIn').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const rows = parseCSV(decodeBytes(await f.arrayBuffer()));
+  if (!rows.length) { toast('번호를 읽지 못했어요. 회차와 번호 6개가 있는 CSV인지 확인해 주세요'); return; }
+  const r = mergeRows(rows, '업로드');
+  toast(`${rows.length}행 읽음 · 새 회차 ${r.added}개 추가${r.mismatch ? ` · 내장 데이터와 다른 행 ${r.mismatch}개(무시)` : ''}`);
+};
+// [최신 데이터 자동 찾기] GitHub Pages는 폴더 목록을 보여 주지 않으므로,
+// 날짜로 계산한 이번 회차부터 거꾸로 data/new_XXXX.csv를 찾아 첫 번째로 있는 파일을 사용합니다.
+// → 관리자는 매주 new_1251.csv, new_1252.csv… 를 data/ 폴더에 올리기만 하면 됩니다.
+async function autoUpdate() {
+  const urls = [];
+  for (let r = W.round; r >= W.round - 12; r--) urls.push(`data/new_${r}.csv`);
+  urls.push('data/latest.csv');                                   // 예전 방식 호환
+  for (const u of urls) {
+    try {
+      const res = await fetch(u, { cache: 'no-store' }); if (!res.ok) continue;
+      const rows = parseCSV(decodeBytes(await res.arrayBuffer())); if (!rows.length) continue;
+      const r = mergeRows(rows, '자동 갱신 · ' + u.split('/').pop());
+      if (r.added) toast(`최신 당첨번호 ${r.added}회차를 불러왔어요`);
+      return;
+    } catch (e) {}
+  }
+}
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 3000); }
+const won = n => n.toLocaleString('ko-KR') + '원';
+const ballClass = n => n <= 10 ? 'b1' : n <= 20 ? 'b2' : n <= 30 ? 'b3' : n <= 40 ? 'b4' : 'b5';
+const ballHTML = (n, extra = '') => `<div class="ball ${ballClass(n)} ${extra}">${n}</div>`;
+const spent = r => r.sets.filter(s => s.bought).length * 1000;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------- ① 히어로 ---------- */
+function tickHero() {
+  const now = Date.now(), w = weekInfo(now);
+  $('roundBadge').textContent = `제 ${w.round}회`;
+  const left = w.draw - now;
+  if (left > 0) {
+    const d = Math.floor(left / DAY), h = Math.floor(left % DAY / 3600e3), m = Math.floor(left % 3600e3 / 60e3), s = Math.floor(left % 60e3 / 1e3);
+    $('countdown').textContent = `${d}일 ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    $('countSub').textContent = left < 35 * 60e3 ? '판매는 마감됐어요 · 곧 추첨!' : '토요일 20:35 추첨까지';
+  } else { $('countdown').textContent = '추첨 완료 🎉'; $('countSub').textContent = '당첨번호를 입력하고 결과를 확인해 보세요'; }
+  const p = Math.min(1, Math.max(0, (now - w.mon) / (w.draw - w.mon))), thrill = Math.round(100 * p * p);
+  $('thrill').style.width = thrill + '%'; $('thrillPct').textContent = thrill;
+  $('budgetLeft').textContent = won(Math.max(0, S.budget - spent(R())));
+}
+
+/* ---------- ② 타임라인 ---------- */
+let selPanel = PANEL_OF_DAY[W.dayIdx], storyDay = W.dayIdx;
+function renderWeek() {
+  $('week').innerHTML = DAYS.map((d, i) => {
+    const date = new Date(W.mon + i * DAY + KST);
+    return `<div class="day ${i === W.dayIdx ? 'today' : ''} ${PANEL_OF_DAY[i] === selPanel ? 'sel' : ''}" data-i="${i}"><b>${d}</b>${date.getUTCMonth()+1}/${date.getUTCDate()}</div>`;
+  }).join('');
+  document.querySelectorAll('.day').forEach(el => el.onclick = () => { selPanel = PANEL_OF_DAY[+el.dataset.i]; storyDay = +el.dataset.i; showPanel(); });
+}
+function showPanel() {
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', +p.dataset.p === selPanel));
+  if (selPanel === 0) fitCanvas();
+  renderWeek(); if (selPanel === 1) renderDream(); if (selPanel === 3) renderRetro();
+}
+
+/* ---------- ③-월: 엔트로피 의식 ---------- */
+const cv = $('ritual'), ctx2d = cv.getContext('2d');
+let events = [], particles = [];
+const NEED = 160;
+function fitCanvas() { const r = cv.getBoundingClientRect(); if (!r.width) return; cv.width = r.width * devicePixelRatio; cv.height = r.height * devicePixelRatio; }
+cv.addEventListener('pointermove', e => {
+  const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  events.push(x, y, performance.now(), e.pressure || 0);
+  for (let k = 0; k < 3; k++) particles.push({ x, y, vx: (Math.random() - .5) * 2, vy: (Math.random() - .5) * 2, life: 1, h: 40 + Math.random() * 30 });
+  const pct = Math.min(100, Math.round(events.length / 4 / NEED * 100));
+  $('entropyBar').style.width = pct + '%';
+  $('entropyTxt').textContent = pct < 100 ? `모은 우주 에너지 ${pct}%` : '씨앗 완성! 번호를 탄생시켜 주세요';
+  $('birthBtn').disabled = pct < 100;
+});
+(function loop() {
+  ctx2d.fillStyle = 'rgba(18,13,34,.18)'; ctx2d.fillRect(0, 0, cv.width, cv.height);
+  const d = devicePixelRatio;
+  for (const p of particles) { p.x += p.vx; p.y += p.vy; p.life -= .02; }
+  particles = particles.filter(p => p.life > 0);
+  for (const p of particles) { ctx2d.beginPath(); ctx2d.arc(p.x * d, p.y * d, Math.max(0.1, 2.4 * d * p.life), 0, 7); ctx2d.fillStyle = `hsla(${p.h},95%,65%,${p.life})`; ctx2d.fill(); }
+  requestAnimationFrame(loop);
+})();
+
+/* 선호 번호 선택기 */
+function renderPicker() {
+  $('picker').innerHTML = Array.from({ length: 45 }, (_, i) => i + 1).map(n => `<div class="pk ${S.fav.includes(n) ? 'on ' + ballClass(n) : ''}" data-n="${n}">${n}</div>`).join('');
+  document.querySelectorAll('.pk').forEach(el => el.onclick = () => {
+    const n = +el.dataset.n;
+    if (S.fav.includes(n)) S.fav = S.fav.filter(x => x !== n);
+    else if (S.fav.length >= 10) { toast('선호 번호는 최대 10개까지 고를 수 있어요'); return; }
+    else S.fav.push(n);
+    S.fav.sort((a, b) => a - b); save(); renderPicker();
+  });
+  $('favTxt').textContent = S.fav.length ? `선택 ${S.fav.length}개: ${S.fav.join(', ')}` : '선택하지 않으면 선호 렌즈는 쉬어요';
+}
+$('favClear').onclick = () => { S.fav = []; save(); renderPicker(); };
+$('perLens').value = S.perLens || 1;
+$('perLens').onchange = e => { S.perLens = +e.target.value; save(); };
+
+async function birth(useRitual) {
+  // 씨앗 = SHA-256( 암호학적 난수 32바이트 ‖ 손끝 움직임 기록 ‖ 현재 시각 )
+  const rnd = crypto.getRandomValues(new Uint8Array(32));
+  const ev = new Float64Array(useRitual ? events : [performance.now()]);
+  const buf = new Uint8Array(32 + ev.byteLength + 8);
+  buf.set(rnd, 0); buf.set(new Uint8Array(ev.buffer), 32); new DataView(buf.buffer).setFloat64(32 + ev.byteLength, Date.now());
+  const seed = await ENGINE.sha256(buf);
+  $('birthBtn').disabled = true; $('quickBtn').disabled = true; $('entropyTxt').textContent = '8가지 렌즈가 번호를 고르는 중…';
+  await new Promise(r => setTimeout(r, 40));
+  const rng = new ENGINE.Rng(seed), A = ENGINE.analyze(H);
+  const ctx = { A, base: ENGINE.buildBaseline(rng, A.lastDraw), lastDraw: A.lastDraw, fav: S.fav };
+  const ids = LENSES.map(l => l.id).filter(id => id !== 'fav' || S.fav.length);
+  const sets = ENGINE.generateAll(rng, ctx, S.perLens || 1, ids);
+  for (const s of sets) {                       // 설렘 지문: 번호+씨앗 해시 앞 8자리
+    const h = ENGINE.hex(await ENGINE.sha256(new TextEncoder().encode(s.nums.join(',') + '|' + ENGINE.hex(seed))));
+    s.fp = (h.slice(0, 4) + '-' + h.slice(4, 8)).toUpperCase(); s.bought = false;
+  }
+  R().sets = sets; R().bornAt = Date.now(); R().dataN = H.length; save();
+  events = []; $('entropyBar').style.width = '0%'; $('entropyTxt').textContent = '다시 휘저으면 새 번호를 만들 수 있어요'; $('quickBtn').disabled = false;
+  renderGallery(true); toast(`${sets.length}세트가 탄생했어요 ✨ 렌즈별로 비교해 보세요`);
+}
+$('birthBtn').onclick = () => birth(true);
+$('quickBtn').onclick = () => birth(false);
+
+function setMetaHTML(s) {
+  return `<span class="pill pg">대중 선호 하위 ${(s.pct * 100).toFixed(1)}%</span>
+    <span class="pill py">당첨 시 몫 ×${s.mult.toFixed(2)}</span>
+    ${s.pat != null ? `<span class="pill pb">패턴 ${Math.round(s.pat * 100)}점</span>` : ''}
+    <span class="pill ${s.bal.length ? 'pr' : 'pg'}">${s.bal.length ? '균형 이탈: ' + s.bal.join('·') : '균형 8항목 통과'}</span>`;
+}
+function renderGallery(animate) {
+  const r = R(); if (!r.sets.length) { $('galleryCard').style.display = 'none'; return; }
+  $('galleryCard').style.display = 'block';
+  const bt = S.bt && S.bt.rows ? Object.fromEntries(S.bt.rows.map(x => [x.id, x])) : {};
+  $('gallery').innerHTML = LENSES.filter(l => r.sets.some(s => s.lens === l.id)).map(l => `
+    <div class="lens">
+      <div class="lens-h"><span class="ic">${l.ic}</span><div class="grow"><b>${l.name}</b><span class="tag pill ${l.tag[0]}">${l.tag[1]}</span>
+        <div class="muted" style="font-size:.8rem">${l.desc}${bt[l.id] ? ` · 백테스트 평균 ${bt[l.id].mean.toFixed(2)}개` : ''}</div></div></div>
+      ${r.sets.map((s, i) => s.lens !== l.id ? '' : `
+        <div class="set">
+          <div class="balls" style="margin:0">${s.nums.map(n => ballHTML(n, animate ? 'pop' : '')).join('')}</div>
+          <div class="meta" style="margin-top:6px">${setMetaHTML(s)}<span class="fp">설렘 지문 #${s.fp}</span></div>
+          <label style="margin-top:6px"><input type="checkbox" data-b="${i}" ${s.bought ? 'checked' : ''} style="width:auto"> 이 세트 구매함 (1,000원)</label>
+        </div>`).join('')}
+    </div>`).join('');
+  document.querySelectorAll('[data-b]').forEach(cb => cb.onchange = () => {
+    const s = r.sets[+cb.dataset.b];
+    if (cb.checked && spent(r) + 1000 > S.budget) { cb.checked = false; toast('이번 주 설렘은 이미 충분해요 · 예산 가드가 지켜 드릴게요'); return; }
+    s.bought = cb.checked; save(); updateProb(); tickHero();
+  });
+  updateProb();
+}
+function updateProb() {
+  const n = R().sets.filter(s => s.bought).length;
+  $('boughtN').textContent = n;
+  $('anyProb').textContent = n ? (ENGINE.pAnyN(n) * 100).toFixed(1) + '%' : '0%';
+  $('p1').textContent = n ? `${Math.round(ENGINE.C45_6 / n).toLocaleString()}분의 1` : '구매 표시를 해 보세요';
+}
+const chosenSets = () => { const b = R().sets.filter(s => s.bought); return b.length ? b : R().sets; };
+$('copyBtn').onclick = async () => {
+  const txt = chosenSets().map(s => `${s.nums.join(', ')}  (${LENS_NAME[s.lens]})`).join('\n');
+  try { await navigator.clipboard.writeText(txt); toast('번호를 복사했어요'); } catch (e) { toast('복사가 막혀 있어요: ' + txt.replace(/\n/g, ' / ')); }
+};
+$('cardBtn').onclick = () => {
+  const sets = chosenSets().slice(0, 8), W2 = 1080, H2 = 420 + sets.length * 140 + 140;
+  const c = document.createElement('canvas'); c.width = W2; c.height = H2;
+  const g = c.getContext('2d'), grd = g.createLinearGradient(0, 0, 0, H2);
+  grd.addColorStop(0, '#1b1436'); grd.addColorStop(1, '#0d1220'); g.fillStyle = grd; g.fillRect(0, 0, W2, H2);
+  for (let i = 0; i < 120; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * .6})`; g.fillRect(Math.random() * W2, Math.random() * 380, 2, 2); }
+  g.textAlign = 'center'; g.fillStyle = '#f5c451'; g.font = 'bold 40px "Noto Sans KR"'; g.fillText(`제 ${W.round}회`, W2 / 2, 130);
+  g.fillStyle = '#ece9f5'; g.font = 'bold 92px "Gowun Batang", serif'; g.fillText('일주일의 설렘', W2 / 2, 240);
+  const colors = { b1: '#fbc400', b2: '#69c8f2', b3: '#ff7272', b4: '#aaaaaa', b5: '#b0d840' };
+  sets.forEach((s, i) => {
+    const y = 380 + i * 140;
+    g.textAlign = 'left'; g.fillStyle = '#a9a3c0'; g.font = '26px "Noto Sans KR"'; g.fillText(LENS_NAME[s.lens], 60, y + 10);
+    s.nums.forEach((n, k) => {
+      const x = 330 + k * 120; g.beginPath(); g.arc(x, y, 50, 0, 7); g.fillStyle = colors[ballClass(n)]; g.fill();
+      g.textAlign = 'center'; g.fillStyle = '#1a1308'; g.font = 'bold 42px "Noto Sans KR"'; g.fillText(n, x, y + 15);
+    });
+    g.fillStyle = '#5ee6b0'; g.font = '22px monospace'; g.textAlign = 'right'; g.fillText('#' + s.fp, W2 - 60, y + 76);
+  });
+  g.textAlign = 'center'; g.fillStyle = '#a9a3c0'; g.font = '28px "Noto Sans KR"';
+  g.fillText('8가지 렌즈로 고른 세상에 하나뿐인 번호', W2 / 2, H2 - 90);
+  g.font = '22px "Noto Sans KR"'; g.fillText('Oseong Vibe Coding EduHub · K.G.B. · 도박문제상담 1336', W2 / 2, H2 - 45);
+  $('cardImg').src = c.toDataURL('image/png'); $('modal').classList.add('on');
+};
+$('modalClose').onclick = () => $('modal').classList.remove('on');
+
+/* ---------- ③-화~금: 드림 위크 ---------- */
+const STORIES = [
+  '1,000원짜리 로또의 평균 환급은 약 500원이에요. 나머지 500원은 일주일 동안 꿈꿀 수 있는 권리의 값이에요.',
+  '8,145,060은 얼마나 큰 수일까요? 매주 한 장씩 산다면 평균 약 15만 6천 년에 한 번 1등이 나오는 크기예요.',
+  '5등 확률은 약 45분의 1이에요. 5세트를 사면 이번 주에 무엇이든 당첨될 확률은 약 11.4%예요. 작지만 진짜 기대예요.',
+  '추첨기는 기억이 없어요. 렌즈 리그에서 순위가 매번 바뀌는 이유예요. 그래도 내 번호에 이야기를 담는 건 자유예요.',
+  '같은 1등이라도 혼자 받으면 이야기가 달라져요. 생일 범위(1~31)나 7처럼 많은 사람이 고르는 번호를 피하는 이유예요.',
+  '판매는 토요일 20:00에 마감되고, 추첨은 20:35에 시작돼요. 오늘 밤, 당신의 번호가 우주를 굴러갑니다.',
+  '결과가 어땠든, 이번 주에 적어 둔 작은 꿈 하나는 오늘 이룰 수 있어요. 그게 이 앱의 진짜 당첨이에요.'
+];
+function renderDream() {
+  const d = (storyDay >= 1 && storyDay <= 4) ? storyDay : (W.dayIdx >= 1 && W.dayIdx <= 4 ? W.dayIdx : 1);
+  $('dreamDayBadge').textContent = `${DAYS[d]}요일 · 드림 위크`;
+  $('story').textContent = STORIES[d];
+  // 데이터 인사이트: 패턴 렌즈들이 무엇을 보고 있는지 공개
+  const A = ENGINE.analyze(H), top = Array.from({ length: 45 }, (_, i) => i + 1).sort((a, b) => A.pattern[b] - A.pattern[a]).slice(0, 6);
+  const tp = A.topPairs.slice(0, 3).map(p => `${p[0]}-${p[1]}(${p[2]}회)`).join(', ');
+  $('dataInsight').innerHTML = `
+    <div>🔥 최근 50회 뜨거운 번호: <b>${A.hot.slice(0, 6).join(', ')}</b></div>
+    <div>❄️ 가장 오래 쉰 번호: <b>${A.cold.slice(0, 6).map(n => `${n}(${A.gap[n]}회)`).join(', ')}</b></div>
+    <div>🤝 역대 최고 궁합수: <b>${tp}</b></div>
+    <div>📈 패턴 점수 상위: <b>${top.join(', ')}</b></div>
+    <div style="margin-top:6px">렌즈들이 보고 있는 '과거의 경향'이에요. 추첨기는 이 기록을 모르니, 참고하며 즐겨 주세요.</div>`;
+  const r = R(), sealed = r.dream && r.dream.sealed, open = Date.now() >= W.draw;
+  if (!sealed) {
+    $('capsuleArea').innerHTML = `
+      <label>당첨되면 하고 싶은 일 (큰 꿈)</label><textarea id="bigIn" placeholder="예: 가족과 제주도 한 달 살기">${r.dream ? esc(r.dream.big) : ''}</textarea>
+      <label>1,000원 이하로 할 수 있는 작은 꿈</label><input id="smallIn" placeholder="예: 퇴근길에 붕어빵 사서 가족과 나눠 먹기" value="${r.dream ? esc(r.dream.small) : ''}">
+      <div class="row" style="margin-top:10px"><button id="sealBtn">캡슐 봉인 🔒</button></div>`;
+    $('sealBtn').onclick = () => {
+      const big = $('bigIn').value.trim(), small = $('smallIn').value.trim();
+      if (!big || !small) { toast('큰 꿈과 작은 꿈을 모두 적어 주세요'); return; }
+      r.dream = { big, small, sealed: true, at: Date.now() }; save(); renderDream(); toast('드림 캡슐이 봉인됐어요 · 토요일 20:35에 열려요');
+    };
+  } else if (!open) {
+    const h = Math.floor((W.draw - Date.now()) / 3600e3);
+    $('capsuleArea').innerHTML = `<div class="capsule"><div style="font-size:2.6rem">🔒</div><div class="serif">드림 캡슐 봉인 중</div><div class="muted">열리기까지 약 ${h}시간</div></div>`;
+  } else {
+    $('capsuleArea').innerHTML = `<div class="capsule"><div style="font-size:2.6rem">💌</div><div class="muted">이번 주 나의 큰 꿈</div><div class="serif" style="font-size:1.15rem">${esc(r.dream.big)}</div><div class="muted" style="margin-top:10px">작은 꿈 → 일요일의 미션이 됐어요</div><div>${esc(r.dream.small)}</div></div>`;
+  }
+}
+
+/* ---------- ③-토: 운명의 공개 ---------- */
+const parseNums = t => (t.match(/\d+/g) || []).map(Number).filter(n => n >= 1 && n <= 45);
+$('revealBtn').onclick = async () => {
+  const win = [...new Set(parseNums($('winIn').value))], bonus = parseNums($('bonusIn').value)[0];
+  if (win.length !== 6 || !bonus || win.includes(bonus)) { toast('당첨번호 6개와 겹치지 않는 보너스 번호를 입력해 주세요'); return; }
+  const r = R(); r.result = { win: win.sort((a, b) => a - b), bonus };
+  if (W.round === H.length + 1 || S.extra[W.round]) { S.extra[W.round] = r.result.win; rebuildH(); }
+  save();
+  if (!r.sets.length) toast('이번 주에 만든 번호가 없어서 결과만 기록했어요');
+  $('revealBtn').disabled = true; $('revealBalls').innerHTML = ''; $('revealSummary').innerHTML = '';
+  $('revealSets').innerHTML = r.sets.map((s, i) => `<div class="set"><b>${LENS_NAME[s.lens]}</b>${s.bought ? ' <span class="pill py">구매</span>' : ''}<div class="balls">${s.nums.map(n => ballHTML(n, 'dim')).join('')}</div><div class="rank" id="rk${i}"></div></div>`).join('');
+  const nodes = [...document.querySelectorAll('#revealSets .set')];
+  for (const n of [...r.result.win, bonus]) {
+    await new Promise(res => setTimeout(res, 900));
+    $('revealBalls').insertAdjacentHTML('beforeend', (n === bonus ? '<span class="muted" style="align-self:center">+ 보너스</span>' : '') + ballHTML(n, 'pop'));
+    r.sets.forEach((s, i) => s.nums.forEach((x, k) => { if (x === n) nodes[i].querySelectorAll('.ball')[k].classList.replace('dim', 'hit'); }));
+  }
+  let prize = 0, best = 0;
+  r.sets.forEach((s, i) => {
+    const { m, r: rk } = ENGINE.rank(s.nums, r.result.win, bonus); s.match = m; s.rank = rk;
+    if (s.bought && ENGINE.PRIZE[rk]) prize += ENGINE.PRIZE[rk];
+    if (rk && (!best || rk < best)) best = rk;
+    $('rk' + i).innerHTML = rk ? `<span style="color:var(--gold)">🎉 ${rk}등! (${m}개 일치)</span>${s.bought ? '' : ' <span class="muted">(구매 안 함)</span>'}` : `<span class="muted">${m}개 일치</span>`;
+  });
+  r.prize = prize; save();
+  $('revealSummary').innerHTML = `<div class="card" style="text-align:center">${best ? `<div class="big">${best}등이 나왔어요!</div>` : '<div class="serif" style="font-size:1.2rem">이번 주는 우주가 다른 사람을 골랐네요</div>'}
+    <div class="muted">구매 세트 기준 확정 당첨금 ${won(prize)}${best && best <= 3 ? ' + 변동 당첨금(동행복권 확인)' : ''}</div>
+    <div class="muted" style="margin-top:6px">렌즈별 성적은 일요일 '나의 실전 리그'에 쌓여요 · 내일은 작은 꿈을 이루는 날 🌱</div></div>`;
+  $('revealBtn').disabled = false;
+};
+
+/* ---------- ③-일: 회고 · 렌즈 리그 · 기록 ---------- */
+function leagueTable(rows, showHolm) {
+  const max = Math.max(1.2, ...rows.map(r => r.mean));
+  return `<table><tr><th>렌즈</th><th>세트</th><th>평균 일치</th><th>무작위 대비</th>${showHolm ? '<th>판정</th>' : ''}</tr>${rows.map(r => `
+    <tr><td>${LENS_NAME[r.id] || r.id}</td><td>${r.sets}</td>
+    <td><span class="lg-bar" style="width:${Math.round(r.mean / max * 70)}px;background:${r.id === 'random' ? 'var(--sub)' : 'var(--mint)'}"></span> ${r.mean.toFixed(3)}</td>
+    <td>${r.mean >= 0.8 ? '+' : ''}${(r.mean - 0.8).toFixed(3)} (z ${r.z.toFixed(2)})</td>
+    ${showHolm ? `<td>${r.id === 'random' ? '기준' : r.holm < 0.05 ? '<b style="color:var(--gold)">유의</b>' : '우연 범위'}</td>` : ''}</tr>`).join('')}</table>`;
+}
+let btRunning = false;
+$('btBtn').onclick = async () => {
+  if (btRunning) return; btRunning = true; $('btBtn').disabled = true;
+  const N = +$('btRounds').value, rng = new ENGINE.Rng(ENGINE.randomSeed()), base0 = ENGINE.buildBaseline(rng, null);
+  const ids = ['avoid', 'pattern', 'balance', 'hotcold', 'pair', 'markov', 'ga', 'random'], per = {};
+  ids.forEach(id => per[id] = []);
+  const start = Math.max(60, H.length - N);
+  for (let t = start; t < H.length; t++) {
+    const res = ENGINE.backtestStep(H, t, rng, base0, ids, 3);
+    for (const id of ids) per[id].push(res[id]);
+    if ((t - start) % 4 === 0) { $('btBar').style.width = Math.round((t - start + 1) / (H.length - start) * 100) + '%'; await new Promise(r => setTimeout(r, 0)); }
+  }
+  $('btBar').style.width = '100%';
+  const rows = ENGINE.league(per);
+  S.bt = { at: Date.now(), n: H.length - start, rows: rows.map(r => ({ id: r.id, mean: r.mean })) }; save();
+  const anySig = rows.some(r => r.id !== 'random' && r.holm < 0.05);
+  $('btOut').innerHTML = `<p class="muted">제${start + 1}~${H.length}회, 회차마다 렌즈별 3세트 · 표본 단위는 회차 평균(같은 회차 세트끼리 상관 보정) · 여러 렌즈 비교에 Holm-Bonferroni 보정</p>
+    ${leagueTable(rows, true)}
+    <p class="muted" style="margin-top:8px">${anySig ? '보정 후에도 유의한 렌즈가 나왔어요. 놀라운 결과이니, 기간을 바꿔 여러 번 다시 실행해서 재현되는지 확인해 보세요.' : '모든 렌즈가 우연의 범위 안이에요. 다시 실행하면 순위가 바뀝니다 — 추첨이 공정하다는 증거예요.'}</p>`;
+  btRunning = false; $('btBtn').disabled = false;
+};
+function renderRetro() {
+  const r = R(), small = r.dream ? esc(r.dream.small) : null;
+  $('retro').innerHTML = `
+    <p class="serif" style="font-size:1.1rem">결과와 상관없이, 이번 주도 설렐 수 있어서 다행이에요.</p>
+    ${small ? `<div class="capsule"><div class="muted">오늘의 미션 · 작은 꿈</div><div class="serif" style="font-size:1.15rem;margin:6px 0">${small}</div>
+      <label style="justify-content:center;display:flex;gap:6px"><input type="checkbox" id="missionCb" ${r.mission ? 'checked' : ''} style="width:auto"> 이뤘어요!</label></div>`
+      : '<p class="muted">드림 캡슐을 쓰지 않았어요. 다음 주에는 작은 꿈 하나를 꼭 적어 보세요.</p>'}`;
+  if ($('missionCb')) $('missionCb').onchange = e => { r.mission = e.target.checked; save(); if (r.mission) toast('이번 주의 진짜 당첨 🎉'); };
+
+  let totSpent = 0, totPrize = 0, saved = 0, missions = 0; const rows = [], per = {};
+  Object.keys(S.rounds).sort((a, b) => b - a).forEach(k => {
+    const x = S.rounds[k], sp = spent(x); totSpent += sp; totPrize += x.prize || 0; if (x.mission) missions++;
+    if (+k < W.round || x.result) saved += Math.max(0, S.budget - sp);
+    if (x.result) { const g = {}; x.sets.forEach(s => { if (s.match != null) (g[s.lens] = g[s.lens] || []).push(s.match); }); for (const id in g) (per[id] = per[id] || []).push(g[id]); }
+    rows.push(`<tr><td>${k}회</td><td>${x.sets.length}세트 / 구매 ${sp / 1000}</td><td>${x.result ? x.result.win.join(',') : '-'}</td><td>${x.prize ? won(x.prize) : '-'}</td><td>${x.mission ? '🌱' : ''}</td></tr>`);
+  });
+  $('stats').innerHTML = `
+    <div><small>누적 구매</small><b>${won(totSpent)}</b></div>
+    <div><small>누적 당첨(확정분)</small><b>${won(totPrize)}</b></div>
+    <div><small>설렘 적금 (예산보다 아낀 돈)</small><b style="color:var(--mint)">${won(saved)}</b></div>
+    <div><small>이룬 작은 꿈</small><b>${missions}개</b></div>`;
+  const lg = ENGINE.league(per);
+  $('myLeague').innerHTML = lg.length ? `${leagueTable(lg, false)}<p>채점된 회차가 30회 이상 쌓이기 전에는 순위를 실력으로 보기 어려워요.</p>` : '토요일에 결과를 입력하면 렌즈별 실전 성적이 여기에 쌓여요.';
+  if (S.bt && !$('btOut').innerHTML) $('btOut').innerHTML = `<p class="muted">지난 백테스트(${S.bt.n}회): ${S.bt.rows.map(x => `${LENS_NAME[x.id]} ${x.mean.toFixed(2)}`).join(' · ')}</p>`;
+  $('history').innerHTML = rows.length ? `<tr><th>회차</th><th>세트</th><th>당첨번호</th><th>당첨금</th><th>미션</th></tr>${rows.join('')}` : '';
+}
+
+/* ---------- 예산 ---------- */
+$('budgetIn').value = S.budget;
+$('budgetSave').onclick = () => {
+  const v = Math.max(1000, Math.round((+$('budgetIn').value || 5000) / 1000) * 1000);
+  S.budget = v; $('budgetIn').value = v; save(); tickHero(); toast(`일주일 예산을 ${won(v)}으로 정했어요`);
+};
+
+/* ---------- 시작 ---------- */
+// v0.1에서 만든 세트(렌즈 정보 없음)는 회피 렌즈로 간주
+Object.values(S.rounds).forEach(x => x.sets.forEach(s => { if (!s.lens) s.lens = 'avoid'; if (!s.bal) s.bal = []; }));
+window.addEventListener('resize', fitCanvas);
+rebuildH(); renderPicker(); showPanel(); renderGallery(false); tickHero(); setInterval(tickHero, 1000);
+if (R().result) { $('winIn').value = R().result.win.join(', '); $('bonusIn').value = R().result.bonus; }
+autoUpdate();
+</script>
+</body>
+</html>
