@@ -1,0 +1,15 @@
+{
+  "name": "일주일의 설렘",
+  "short_name": "일주일의 설렘",
+  "description": "15가지 렌즈로 고른 세상에 하나뿐인 로또 번호, 부담 없이 설레는 일주일",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d1220",
+  "theme_color": "#1a1430",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

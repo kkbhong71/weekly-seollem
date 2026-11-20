@@ -4,11 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>일주일의 설렘</title>
+<meta name="description" content="15가지 렌즈로 고른 세상에 하나뿐인 로또 번호, 부담 없이 설레는 일주일">
+<meta name="theme-color" content="#1a1430">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="일주일의 설렘">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 /* =========================================================
-   일주일의 설렘 v0.4 · Oseong Vibe Coding EduHub · K.G.B.
+   일주일의 설렘 v0.8 · Oseong Vibe Coding EduHub · K.G.B.
    [구조] 1) 스타일  2) 화면 마크업  3) ENGINE(순수 계산, engine.js)  4) DATA(1~1250회 내장)  5) UI
    ========================================================= */
 :root{--bg1:#0d1220;--bg2:#1a1430;--card:rgba(255,255,255,.045);--line:rgba(255,255,255,.09);
@@ -50,6 +57,7 @@ label{font-size:.85rem;color:var(--sub);display:block;margin:10px 0 4px}
 .ball{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#1a1308;box-shadow:inset -4px -5px 8px rgba(0,0,0,.25),inset 3px 3px 6px rgba(255,255,255,.4);transition:.3s}
 .b1{background:#fbc400}.b2{background:#69c8f2}.b3{background:#ff7272}.b4{background:#aaa}.b5{background:#b0d840}
 .ball.dim{opacity:.28;filter:grayscale(.6)}
+.ball.bon{outline:3px dashed var(--sky);outline-offset:2px}
 .ball.hit{transform:scale(1.12);box-shadow:0 0 0 3px #fff,0 0 18px var(--gold)}
 .ball.pop{animation:pop .6s}
 @keyframes pop{0%{transform:scale(0) rotate(-180deg)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
@@ -65,7 +73,7 @@ label{font-size:.85rem;color:var(--sub);display:block;margin:10px 0 4px}
 .lens-h .tag{font-size:.72rem;padding:1px 8px;border-radius:99px;margin-left:4px;vertical-align:2px}
 .set{border-top:1px dashed var(--line);padding-top:10px;margin-top:10px}
 .set .meta{font-size:.78rem;color:var(--sub);display:flex;flex-wrap:wrap;gap:4px}
-.fp{font-family:ui-monospace,monospace;color:var(--mint);font-size:.78rem}
+.fp{font-family:ui-monospace,monospace;color:var(--mint);font-size:.78rem;white-space:nowrap}
 .pill{display:inline-block;font-size:.74rem;padding:1px 8px;border-radius:99px}
 .pg{background:rgba(94,230,176,.15);color:var(--mint)} .pr{background:rgba(255,125,147,.15);color:var(--rose)}
 .py{background:rgba(245,196,81,.15);color:var(--gold)} .pb{background:rgba(111,182,255,.15);color:var(--sky)}
@@ -90,155 +98,332 @@ td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
 th{color:var(--sub);font-weight:500}
 @media (max-width:440px){.ball{width:36px;height:36px;font-size:.92rem}.balls{gap:6px}.lens{padding:12px}}
 .lg-bar{display:inline-block;height:8px;border-radius:4px;background:var(--mint);vertical-align:middle}
+
+/* ===== v0.5 반응형 레이아웃 =====
+   기본(휴대폰): 한 줄 세로 흐름. 1000px 이상(PC): 히어로 한 줄 바 + 요일별 2단(왼쪽 조작 · 오른쪽 결과) */
+.cols{display:flex;flex-direction:column}
+.cols .side,.cols .main{display:contents}                 /* 휴대폰: 두 칸을 풀어서 순서대로 쌓기 */
+.o-summary{order:5}.o-gallery,.o-empty{order:4}            /* 휴대폰: 갤러리 다음에 요약 */
+.o-empty{display:none}
+.gear{padding:6px 12px;font-size:.85rem;margin-top:10px}
+.sheet{background:#1b1530;border:1px solid var(--line);border-radius:18px;padding:18px;width:min(560px,100%);max-height:90vh;overflow:auto}
+.sheet .card{margin:12px 0 0}
+.tag-mini{display:inline-flex;align-items:center;gap:3px;font-size:.72rem;padding:1px 7px;border-radius:99px;cursor:help;white-space:nowrap}
+@media (min-width:1000px){
+  .wrap{max-width:1240px;padding:18px 24px 50px}
+  .hero{display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:26px;text-align:left;padding:14px 22px}
+  .hero h1{font-size:1.5rem;margin:2px 0 0}
+  .hero .h-sub{display:none}
+  .hero .count{font-size:1.6rem;margin:0}
+  .hero .meter{margin:0 0 4px;max-width:none}
+  .gear{margin:0}
+  .week{max-width:640px}
+  .cols{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
+  .cols.even{grid-template-columns:1fr 1fr}
+  .cols .side,.cols .main{display:block}
+  .cols:not(.even) .side{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;scrollbar-width:thin}
+  .o-empty{display:block}
+  #ritual{height:180px}
+  .picker{gap:4px}.pk{font-size:.78rem}
+  #gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+  #gallery .lens{margin:0}
+  #gallery.simple{display:block}
+  .recgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+  .recgrid .recset{margin:0}
+  .grid-sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+  .grid-sets .set{border:1px solid var(--line);border-radius:12px;padding:10px;margin:0}
+}
+
+/* 처음 사용자 안내 */
+.h-btns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.guide{width:min(460px,100%);text-align:center;padding:20px 22px}
+.g-top{display:flex;justify-content:space-between;align-items:center}
+.g-skip{padding:4px 10px;font-size:.8rem}
+.g-body{min-height:300px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;animation:fade .35s}
+.g-emoji{font-size:3.4rem;line-height:1.1}
+.g-body h3{font-family:"Gowun Batang",serif;font-size:1.35rem;margin:6px 0 2px}
+.g-body p{margin:0;color:var(--text);font-size:1rem;line-height:1.7}
+.g-body .g-small{color:var(--sub);font-size:.85rem}
+.g-steps{text-align:left;background:rgba(0,0,0,.2);border-radius:12px;padding:10px 14px;margin-top:6px;font-size:.95rem;line-height:1.9}
+.g-steps b{color:var(--gold)}
+.g-dots{display:flex;gap:6px;justify-content:center;margin:10px 0}
+.g-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.18);transition:.3s}
+.g-dots i.on{background:var(--gold);width:22px;border-radius:4px}
+.g-promise{border:1px solid rgba(255,125,147,.4);border-radius:12px;padding:10px 12px;font-size:.9rem;text-align:left;line-height:1.8}
+@media (min-width:1000px){.h-btns{justify-content:flex-end}}
+
+/* v0.7: 알림 띠 · 말풍선 */
+#askModal{z-index:30}                 /* 확인 창은 설정·보관함 창보다 항상 위 */
+.notice{margin:10px 0 0;padding:10px 14px;border-radius:12px;background:rgba(245,196,81,.12);border:1px solid rgba(245,196,81,.35);font-size:.88rem}
+#tip{position:fixed;z-index:20;max-width:260px;background:#2a2145;border:1px solid var(--gold);color:var(--text);font-size:.82rem;line-height:1.5;padding:8px 10px;border-radius:10px;display:none;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+[data-tip]{cursor:help}
+.arch{border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}
+
+/* v0.7: 추천 · 용지 */
+.rec-badge{display:inline-block;font-size:.7rem;padding:1px 7px;border-radius:99px;background:rgba(245,196,81,.18);color:var(--gold);margin-left:4px}
+.recset{border:1px solid rgba(245,196,81,.35);border-radius:14px;padding:12px;margin:10px 0;background:rgba(245,196,81,.04)}
+.slip{display:flex;gap:10px;flex-wrap:wrap;background:#f6efe3;border-radius:12px;padding:12px;margin:10px 0;color:#7a1f1f}
+.slip-game{flex:1;min-width:118px}
+.slip-game b{display:block;text-align:center;font-size:.85rem;margin-bottom:4px}
+.slip-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.slip-grid span{font-size:.62rem;text-align:center;border:1px solid rgba(160,40,40,.45);border-radius:3px;padding:2px 0;color:#a33}
+.slip-grid span.mk{background:#222;color:#ffd75e;border-color:#222;font-weight:700}
+.slip-nums{font-size:.75rem;text-align:center;margin-top:4px;color:#5a1a1a}
+
+/* v0.8: 큰 글씨 · 색에만 기대지 않는 표시 · 키보드 포커스 */
+html.bigtext{font-size:118%}
+html.bigtext .ball{width:46px;height:46px;font-size:1.08rem}
+html.bigtext .tag-mini{font-size:.84rem}
+html.bigtext .pk{font-size:.95rem}
+html.bigtext .slip-grid span{font-size:.72rem}
+#bigBtn small{font-size:.7em;vertical-align:super}
+#bigBtn[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+.ball{position:relative}
+.ball.hit::after{content:"✓";position:absolute;right:-4px;top:-6px;width:17px;height:17px;border-radius:50%;background:#fff;color:#1a7f37;font-size:.72rem;display:grid;place-items:center;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.ball.bon::after{content:"B";position:absolute;right:-4px;top:-6px;width:17px;height:17px;border-radius:50%;background:var(--sky);color:#06213a;font-size:.68rem;display:grid;place-items:center}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:8px}
+.pk:focus-visible,.day:focus-visible{outline-offset:1px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <!-- ① 히어로 -->
+  <!-- ① 히어로: 휴대폰은 세로 가운데 정렬, PC는 한 줄 바 -->
   <section class="card hero">
-    <span class="badge" id="roundBadge">제 ----회</span>
-    <h1>일주일의 설렘</h1>
-    <div class="muted">15가지 렌즈로 고른 세상에 하나뿐인 번호, 부담 없이 설레는 일주일</div>
-    <div class="count" id="countdown">--</div>
-    <div class="muted" id="countSub">토요일 20:35 추첨까지</div>
-    <div class="meter"><i id="thrill" style="width:0"></i></div>
-    <div class="muted">설렘 지수 <span id="thrillPct">0</span>% · 이번 주 예산 남음 <b id="budgetLeft">-</b></div>
+    <div class="h-title"><span class="badge" id="roundBadge">제 ----회</span><h1>일주일의 설렘</h1><div class="muted h-sub">15가지 렌즈로 고른 세상에 하나뿐인 번호, 부담 없이 설레는 일주일</div></div>
+    <div class="h-count"><div class="count" id="countdown">--</div><div class="muted" id="countSub">토요일 20:35 추첨까지</div></div>
+    <div class="h-meter"><div class="meter"><i id="thrill" style="width:0"></i></div><div class="muted">설렘 지수 <span id="thrillPct">0</span>% · 이번 주 예산 남음 <b id="budgetLeft">-</b></div></div>
+    <div class="h-btns"><button class="ghost gear" id="bigBtn" aria-pressed="false" aria-label="글씨 크게 보기">가<small>+</small> 큰 글씨</button><button class="ghost gear" id="shareBtn" aria-label="앱 공유하기">📤 공유</button><button class="ghost gear" id="helpBtn" aria-label="사용법 보기">❓ 사용법</button><button class="ghost gear" id="gearBtn" aria-label="설정 열기">⚙️ 설정</button></div>
   </section>
 
   <!-- ② 요일 타임라인 -->
-  <div class="week" id="week"></div>
+  <div class="week" id="week" role="tablist" aria-label="요일 선택"></div>
+  <div class="notice" id="notice" role="status" style="display:none"></div>
 
-  <!-- ③-월: 번호 탄생 -->
+  <!-- ③-월: 번호 탄생 — PC: 왼쪽 조작 패널(고정) + 오른쪽 렌즈 격자 -->
   <section class="panel" data-p="0">
-    <div class="card">
-      <span class="badge">월 · 번호 탄생일</span>
-      <h2>손끝으로 만드는 나만의 씨앗</h2>
-      <p class="muted">아래 밤하늘을 손가락이나 마우스로 휘저어 주세요. 움직임의 위치와 마이크로초 단위 시간이 암호학적 난수와 섞여 <b>당신만의 씨앗</b>이 되고, 15가지 렌즈가 모두 이 씨앗으로 번호를 고릅니다. 씨앗은 서버로 전송되지 않아요.</p>
-      <canvas id="ritual"></canvas>
-      <div class="gauge"><i id="entropyBar"></i></div>
-      <div class="row">
-        <span class="muted grow" id="entropyTxt">모은 우주 에너지 0%</span>
-        <select id="perLens" title="렌즈별 세트 수"><option value="1">렌즈별 1세트</option><option value="2">렌즈별 2세트</option><option value="3">렌즈별 3세트</option><option value="4">렌즈별 4세트</option><option value="5">렌즈별 5세트</option></select>
-        <button class="ghost" id="quickBtn">빠르게</button>
-        <button id="birthBtn" disabled>번호 탄생 ✨</button>
+   <div class="cols">
+    <div class="side">
+      <div class="card">
+        <span class="badge">번호 만들기 · 언제든 OK</span>
+        <h2>손끝으로 만드는 나만의 씨앗</h2>
+        <p class="muted">아래 밤하늘을 손가락이나 마우스로 휘저어 주세요. 움직임의 위치와 마이크로초 단위 시간이 암호학적 난수와 섞여 <b>당신만의 씨앗</b>이 되고, 15가지 렌즈가 모두 이 씨앗으로 번호를 고릅니다. 씨앗은 서버로 전송되지 않아요.</p>
+        <canvas id="ritual" role="img" aria-label="손끝으로 문질러 씨앗을 모으는 밤하늘. 문지르기 어렵다면 빠르게 버튼을 누르세요."></canvas>
+        <div class="gauge"><i id="entropyBar"></i></div>
+        <div class="row">
+          <span class="muted grow" id="entropyTxt">모은 우주 에너지 0%</span>
+          <select id="perLens" title="렌즈별 세트 수"><option value="1">렌즈별 1세트</option><option value="2">렌즈별 2세트</option><option value="3">렌즈별 3세트</option><option value="4">렌즈별 4세트</option><option value="5">렌즈별 5세트</option></select>
+          <button class="ghost" id="quickBtn">빠르게</button>
+          <button id="birthBtn" disabled>번호 탄생 ✨</button>
+        </div>
       </div>
-    </div>
 
-    <div class="card">
-      <h2>나의 번호 설정 <span class="muted" style="font-size:.85rem">(선택)</span></h2>
-      <p class="muted">번호를 한 번 누르면 <b style="color:var(--gold)">선호(고정수)</b>, 두 번 누르면 <b style="color:var(--rose)">제외수 ✕</b>, 세 번 누르면 해제돼요. 제외수는 모든 렌즈에서 빠지고, 선호 번호는 <b>선호 렌즈</b>와 <b>휠링 렌즈</b>가 사용해요.</p>
-      <div class="picker" id="picker"></div>
-      <div class="row" style="margin-top:8px"><span class="muted grow" id="favTxt"></span><button class="ghost" id="favClear">모두 해제</button></div>
-      <label>휠링 보장 조건 (선호 번호 7~12개일 때)</label>
-      <select id="wheelT"><option value="3">선호 번호 중 3개가 나오면 → 최소 5등 1장 보장</option><option value="4">선호 번호 중 4개가 나오면 → 최소 4등 1장 보장</option></select>
-      <label>행운의 단어 (꿈에서 본 것, 기념일, 소원, 좋아하는 말…)</label>
-      <input id="wordsIn" placeholder="예: 돼지꿈, 결혼기념일 0515, 가족 건강">
-    </div>
+      <div class="card">
+        <h2>나의 번호 설정 <span class="muted" style="font-size:.85rem">(선택)</span></h2>
+        <p class="muted">번호를 한 번 누르면 <b style="color:var(--gold)">선호(고정수)</b>, 두 번 누르면 <b style="color:var(--rose)">제외수 ✕</b>, 세 번 누르면 해제돼요. 제외수는 모든 렌즈에서 빠지고, 선호 번호는 <b>선호 렌즈</b>와 <b>휠링 렌즈</b>가 사용해요.</p>
+        <div class="picker" id="picker"></div>
+        <div class="row" style="margin-top:8px"><span class="muted grow" id="favTxt"></span><button class="ghost" id="favClear">모두 해제</button></div>
+        <label>휠링 보장 조건 (선호 번호 7~12개일 때)</label>
+        <select id="wheelT"><option value="3">선호 번호 중 3개가 나오면 → 최소 5등 1장 보장</option><option value="4">선호 번호 중 4개가 나오면 → 최소 4등 1장 보장</option></select>
+        <label>행운의 단어 (꿈에서 본 것, 기념일, 소원, 좋아하는 말…)</label>
+        <input id="wordsIn" placeholder="예: 돼지꿈, 결혼기념일 0515, 가족 건강">
+      </div>
 
-    <div class="card" id="galleryCard" style="display:none">
-      <h2>이번 주 렌즈 갤러리</h2>
-      <p class="muted">같은 질문, "어떤 6개?"에 15가지 관점이 각자 답했어요. 렌즈 이름을 누르면 접고 펼 수 있어요. 모든 세트에 <b>같은 잣대</b>(패턴 점수·균형 검사·대중 선호도·당첨 시 예상 몫)를 붙였으니 비교해 보고 마음이 가는 세트에 구매 표시를 하세요.</p>
-      <div id="gallery"></div>
-      <div class="stat" style="margin-top:12px">
-        <div><small>구매 표시한 세트</small><span class="big" id="boughtN">0</span>세트</div>
-        <div><small>이번 주 무엇이든 당첨될 확률</small><span class="big" id="anyProb">0%</span></div>
-        <div><small>1등 확률 (세트 수 반영)</small><span id="p1">-</span></div>
-      </div>
-      <div class="lens" style="margin-top:12px">
-        <b>🧩 구매 조합 최적화</b>
-        <p class="muted" style="margin:4px 0">같은 장수를 사도, 세트끼리 번호가 덜 겹치면 '하나라도 5등 이상'이 나올 확률이 조금 올라가요(기대 당첨금은 같아요). 만들어진 모든 세트 중에서 이 확률이 가장 높은 조합을 골라 구매 표시해 드려요.</p>
-        <div class="row"><select id="covK"></select><button class="ghost" id="covBtn">최적 조합 고르기</button></div>
-        <div class="muted" id="covOut" style="margin-top:6px"></div>
-      </div>
-      <div class="row" style="margin-top:12px">
-        <button class="ghost" id="cardBtn">설렘 카드 만들기</button>
-        <button class="ghost" id="copyBtn">구매 세트 복사</button>
+      <div class="card o-summary" id="summaryCard" style="display:none">
+        <h2>이번 주 요약</h2>
+        <div class="stat">
+          <div><small>구매 표시</small><span class="big" id="boughtN">0</span>세트</div>
+          <div><small>무엇이든 당첨될 확률</small><span class="big" id="anyProb">0%</span></div>
+        </div>
+        <div class="muted" style="margin-top:6px">1등 확률: <span id="p1">-</span></div>
+        <div class="muted" style="margin-top:2px">이번 달 누적: <b id="monthSpent">0원</b></div>
+        <div class="notice" id="careNote" style="display:none;margin-top:8px"></div>
+        <div class="lens" style="margin-top:10px">
+          <b>🧩 구매 조합 최적화</b>
+          <p class="muted" style="margin:4px 0">세트끼리 번호가 덜 겹치면 '하나라도 5등 이상' 확률이 조금 올라가요(기대 당첨금은 같아요). 만든 세트 중 가장 좋은 조합을 골라 구매 표시해 드려요.</p>
+          <div class="row"><select id="covK"></select><button class="ghost" id="covBtn">최적 조합 고르기</button></div>
+          <div class="muted" id="covOut" style="margin-top:6px"></div>
+        </div>
+        <div class="row" style="margin-top:10px"><button class="ghost" id="cardBtn">설렘 카드 만들기</button><button class="ghost" id="copyBtn">구매 세트 복사</button><button class="ghost" id="archBtn">🗂 보관함 <span id="archN"></span></button><button class="ghost" id="slipBtn">🧾 용지 마킹 보기</button></div>
       </div>
     </div>
+    <div class="main">
+      <div class="card o-gallery" id="galleryCard" style="display:none">
+        <div class="row"><h2 class="grow" id="galTitle" style="margin:0">⭐ 이번 주 추천 번호</h2><button class="ghost" id="viewBtn">15가지 렌즈 전체 보기 ▾</button></div>
+        <p class="muted" id="galDesc"></p>
+        <div id="gallery"></div>
+      </div>
+      <div class="card o-empty" id="emptyCard">
+        <h2>렌즈 갤러리</h2>
+        <p class="muted">밤하늘을 휘저어 씨앗을 모은 뒤 <b>번호 탄생 ✨</b>(또는 <b>빠르게</b>)를 누르면, 여기에 렌즈별 번호가 카드로 펼쳐져요.</p>
+      </div>
+    </div>
+   </div>
   </section>
 
-  <!-- ③-화~금: 드림 위크 -->
+  <!-- ③-화~금: 드림 위크 — PC: 왼쪽 이야기·데이터 / 오른쪽 드림 캡슐 -->
   <section class="panel" data-p="1">
-    <div class="card">
-      <span class="badge" id="dreamDayBadge">화~금 · 드림 위크</span>
-      <h2>오늘의 확률 이야기</h2>
-      <div class="story serif" id="story"></div>
+   <div class="cols even">
+    <div class="side">
+      <div class="card nosets" style="display:none"><b>아직 이번 주 번호가 없어요</b><p class="muted" style="margin:4px 0 8px">요일과 상관없이 지금 바로 만들 수 있어요.</p><button class="goMake">✨ 번호 만들러 가기</button></div>
+      <div class="card">
+        <span class="badge" id="dreamDayBadge">화~금 · 드림 위크</span>
+        <h2>오늘의 확률 이야기</h2>
+        <div class="story serif" id="story"></div>
+      </div>
+
+      <div class="card">
+        <h2>이번 주 번호의 성격</h2>
+        <div id="dataInsight" class="muted"></div>
+      </div>
+
     </div>
-    <div class="card">
-      <h2>이번 주 번호의 성격</h2>
-      <div id="dataInsight" class="muted"></div>
+    <div class="main">
+      <div class="card">
+        <h2>드림 캡슐</h2>
+        <p class="muted">당첨되면 하고 싶은 일과, 당첨과 상관없이 <b>1,000원 이하로 할 수 있는 작은 꿈</b>을 적고 봉인하세요. 캡슐은 토요일 추첨 순간까지 열리지 않고, 일요일에 작은 꿈이 <b>오늘의 미션</b>이 됩니다.</p>
+        <div id="capsuleArea"></div>
+      </div>
+
     </div>
-    <div class="card">
-      <h2>드림 캡슐</h2>
-      <p class="muted">당첨되면 하고 싶은 일과, 당첨과 상관없이 <b>1,000원 이하로 할 수 있는 작은 꿈</b>을 적고 봉인하세요. 캡슐은 토요일 추첨 순간까지 열리지 않고, 일요일에 작은 꿈이 <b>오늘의 미션</b>이 됩니다.</p>
-      <div id="capsuleArea"></div>
-    </div>
+   </div>
   </section>
 
-  <!-- ③-토: 운명의 밤 -->
+  <!-- ③-토: 운명의 밤 — PC: 왼쪽 입력·공 공개 / 오른쪽 세트별 결과 격자 -->
   <section class="panel" data-p="2">
-    <div class="card">
-      <span class="badge">토 · 운명의 밤</span>
-      <h2>당첨번호 공개</h2>
-      <p class="muted">판매 마감 20:00 · 추첨 20:35. 추첨이 끝나면 당첨번호 6개와 보너스 번호를 입력하고 <b>공개</b>를 누르세요. 공이 하나씩 떨어지며 모든 렌즈의 번호와 실시간으로 맞춰 봅니다. 입력한 결과는 다음 주 분석 데이터에도 더해져요.</p>
-      <label>당첨번호 6개 (쉼표 또는 띄어쓰기)</label>
-      <input id="winIn" placeholder="예: 4, 5, 25, 28, 32, 42">
-      <label>보너스 번호</label>
-      <div class="row"><input id="bonusIn" style="max-width:120px" placeholder="예: 17"><button id="revealBtn">운명의 공개 🎯</button></div>
-      <div class="balls" id="revealBalls" style="margin-top:14px"></div>
-      <div id="revealSets"></div>
-      <div id="revealSummary"></div>
+   <div class="cols">
+    <div class="side">
+      <div class="card nosets" style="display:none"><b>아직 이번 주 번호가 없어요</b><p class="muted" style="margin:4px 0 8px">요일과 상관없이 지금 바로 만들 수 있어요.</p><button class="goMake">✨ 번호 만들러 가기</button></div>
+      <div class="card">
+        <span class="badge">토 · 운명의 밤</span>
+        <h2>당첨번호 공개</h2>
+        <p class="muted">판매 마감 20:00 · 추첨 20:35. 추첨이 끝나면 당첨번호 6개와 보너스 번호를 입력하고 <b>공개</b>를 누르세요. 공이 하나씩 떨어지며 모든 렌즈의 번호와 실시간으로 맞춰 봅니다. 입력한 결과는 다음 주 분석 데이터에도 더해져요.</p>
+        <label>당첨번호 6개 (쉼표 또는 띄어쓰기)</label>
+        <input id="winIn" placeholder="예: 4, 5, 25, 28, 32, 42">
+        <label>보너스 번호 <span class="muted">(선택 · 2등 판정용)</span></label>
+        <div class="row"><input id="bonusIn" style="max-width:120px" placeholder="예: 17"><button id="revealBtn">운명의 공개 🎯</button></div>
+        <div class="balls" id="revealBalls" style="margin-top:14px"></div>
+        <button class="ghost" id="icsBtn2" style="margin-top:6px">📅 매주 토요일 알림 등록</button>
+        <div id="revealSummary"></div>
+      </div>
     </div>
+    <div class="main">
+      <div class="card"><h2>세트별 결과</h2><div id="revealSets" class="grid-sets"><p class="muted">공개를 누르면 이번 주 모든 세트가 여기에서 실시간으로 채점돼요.</p></div></div>
+    </div>
+   </div>
   </section>
 
-  <!-- ③-일: 쉼표 -->
+  <!-- ③-일: 쉼표 — PC: 왼쪽 회고·기록 / 오른쪽 렌즈 리그 -->
   <section class="panel" data-p="3">
-    <div class="card">
-      <span class="badge">일 · 쉼표</span>
-      <h2>이번 주를 돌아보며</h2>
-      <div id="retro"></div>
+   <div class="cols even">
+    <div class="side">
+      <div class="card">
+        <span class="badge">일 · 쉼표</span>
+        <h2>이번 주를 돌아보며</h2>
+        <div id="retro"></div>
+      </div>
+
+      <div class="card">
+        <h2>설렘 적금 & 기록</h2>
+        <div class="stat" id="stats"></div>
+        <table id="history" style="margin-top:10px"></table>
+      </div>
+
     </div>
-    <div class="card">
-      <h2>렌즈 리그 🏆</h2>
-      <p class="muted">어느 렌즈가 정말 잘 맞히는지 <b>정직하게</b> 겨뤄 봅니다. 백테스트는 과거 각 회차를 <b>그 이전 데이터만</b>으로 예측해 실제 결과와 비교하는 방식(walk-forward)이고, '대조군'은 완전 무작위예요. 추첨기 시뮬레이션·우주 난수는 그 자체가 무작위라서, 선호·행운의 단어·휠링은 사람마다 입력이 달라서 리그에서 뺐어요. 무작위라면 모든 렌즈의 평균은 0.8개 근처에 모이고, 실행할 때마다 순위가 바뀝니다.</p>
-      <div class="row"><select id="btRounds"><option value="50">최근 50회</option><option value="100" selected>최근 100회</option><option value="200">최근 200회</option></select><button id="btBtn">백테스트 실행</button></div>
-      <div class="bar"><i id="btBar"></i></div>
-      <div id="btOut"></div>
-      <h2 style="margin-top:18px;font-size:1.05rem">나의 실전 리그</h2>
-      <div id="myLeague" class="muted"></div>
+    <div class="main">
+      <div class="card">
+        <h2>렌즈 리그 🏆</h2>
+        <p class="muted">어느 렌즈가 정말 잘 맞히는지 <b>정직하게</b> 겨뤄 봅니다. 백테스트는 과거 각 회차를 <b>그 이전 데이터만</b>으로 예측해 실제 결과와 비교하는 방식(walk-forward)이고, '대조군'은 완전 무작위예요. 추첨기 시뮬레이션·우주 난수는 그 자체가 무작위라서, 선호·행운의 단어·휠링은 사람마다 입력이 달라서 리그에서 뺐어요. 무작위라면 모든 렌즈의 평균은 0.8개 근처에 모이고, 실행할 때마다 순위가 바뀝니다.</p>
+        <div class="row"><select id="btRounds"><option value="50">최근 50회</option><option value="100" selected>최근 100회</option><option value="200">최근 200회</option></select><button id="btBtn">백테스트 실행</button></div>
+        <div class="bar"><i id="btBar"></i></div>
+        <div id="btOut"></div>
+        <h2 style="margin-top:18px;font-size:1.05rem">나의 실전 리그</h2>
+        <div id="myLeague" class="muted"></div>
+      </div>
+
     </div>
-    <div class="card">
-      <h2>설렘 적금 & 기록</h2>
-      <div class="stat" id="stats"></div>
-      <table id="history" style="margin-top:10px"></table>
-    </div>
+   </div>
   </section>
 
-  <!-- ④ 설정 -->
-  <div class="card">
-    <h2>예산 가드</h2>
-    <p class="muted">설렘이 부담이 되지 않도록 일주일 예산을 정해 두세요. 예산을 넘는 구매 표시는 막혀요.</p>
-    <div class="row"><input id="budgetIn" type="number" min="1000" step="1000" style="max-width:160px"><span class="muted">원 / 주</span><button class="ghost" id="budgetSave">저장</button></div>
-  </div>
-  <div class="card">
-    <h2>당첨번호 데이터</h2>
-    <p class="muted" id="dataTxt"></p>
-    <label>최신 CSV로 갱신 (동행복권 원본·표준 컬럼·추첨일 포함 형식 자동 인식, CP949 지원)</label>
-    <input type="file" id="csvIn" accept=".csv,.txt">
-  </div>
+  <!-- ⓪ 처음 사용자 안내: 첫 방문 때 한 번 자동으로 열리고, ❓ 사용법 버튼으로 다시 열 수 있음 -->
+  <div class="modal" id="guide" role="dialog" aria-modal="true" aria-label="사용법 안내"><div class="sheet guide">
+    <div class="g-top"><span class="muted" id="gStep">1 / 6</span><button class="ghost g-skip" id="gSkip">건너뛰기</button></div>
+    <div class="g-body" id="gBody"></div>
+    <div class="g-dots" id="gDots"></div>
+    <div class="row g-nav"><button class="ghost" id="gPrev">← 이전</button><span class="grow"></span><button id="gNext">다음 →</button></div>
+  </div></div>
+
+  <!-- 공용 확인 창: 브라우저 confirm 대신(미리보기 환경에서도 동작) -->
+  <div class="modal" id="askModal" role="dialog" aria-modal="true"><div class="sheet" style="width:min(440px,100%)">
+    <h2 id="askTitle" style="margin-top:0"></h2><div id="askBody" class="muted"></div>
+    <div id="askBtns" style="display:flex;flex-direction:column;gap:8px;margin-top:14px"></div>
+  </div></div>
+  <!-- 보관함: 다시 만들기 전에 있던 번호들 -->
+  <div class="modal" id="archModal" role="dialog" aria-modal="true"><div class="sheet">
+    <div class="row"><h2 class="grow" style="margin:0">🗂 보관함</h2><button class="ghost" id="archClose">닫기</button></div>
+    <p class="muted">번호를 다시 만들 때마다 이전 번호가 여기에 자동으로 보관돼요. '다시 꺼내기'를 누르면 이번 주 번호에 더해져요.</p>
+    <div id="archList"></div>
+  </div></div>
+  <div id="tip" role="tooltip"></div>
+  <!-- 로또 용지 마킹 보기 -->
+  <div class="modal" id="slipModal" role="dialog" aria-modal="true"><div class="sheet" style="width:min(720px,100%)">
+    <div class="row"><h2 class="grow" style="margin:0">🧾 용지 마킹 보기</h2><button class="ghost" id="slipClose">닫기</button></div>
+    <p class="muted">판매점 로또 용지와 같은 <b>7칸 배치</b>예요. 노랗게 칠해진 칸을 그대로 따라 칠하면 돼요(용지 한 장에 5게임 A~E).</p>
+    <div id="slipBody"></div>
+  </div></div>
+
+  <!-- ④ 설정 창(⚙️): 예산 가드 · 당첨번호 데이터 -->
+  <div class="modal" id="setModal" role="dialog" aria-modal="true" aria-label="설정"><div class="sheet">
+    <div class="row"><h2 class="grow" style="margin:0">⚙️ 설정</h2><button class="ghost" id="setClose">닫기</button></div>
+    <div class="card">
+      <h2>보기 · 알림 · 설치</h2>
+      <label style="display:flex;gap:8px;align-items:center;color:var(--text);font-size:.95rem"><input type="checkbox" id="bigCb" style="width:auto"> 큰 글씨로 보기</label>
+      <div class="row" style="margin-top:10px"><button class="ghost" id="icsBtn">📅 매주 토요일 알림 등록</button><button class="ghost" id="installBtn" style="display:none">📲 홈 화면에 설치</button></div>
+      <p class="muted" id="installTip" style="font-size:.82rem;margin:8px 0 0"></p>
+    </div>
+
+    <div class="card">
+      <h2>예산 가드</h2>
+      <p class="muted">설렘이 부담이 되지 않도록 일주일 예산을 정해 두세요. 예산을 넘는 구매 표시는 막혀요.</p>
+      <div class="row"><input id="budgetIn" type="number" min="1000" step="1000" style="max-width:160px"><span class="muted">원 / 주</span><button class="ghost" id="budgetSave">저장</button></div>
+    </div>
+
+    <div class="card">
+      <h2>당첨번호 데이터</h2>
+      <p class="muted" id="dataTxt"></p>
+      <label>최신 CSV로 갱신 (동행복권 원본·표준 컬럼·추첨일 포함 형식 자동 인식, CP949 지원)</label>
+      <input type="file" id="csvIn" accept=".csv,.txt">
+    </div>
+
+    <div class="card">
+      <h2>🔒 개인정보 안내</h2>
+      <p class="muted" style="margin:0">내 번호·꿈·기록은 <b>이 기기 안에만</b> 저장되고, 어떤 서버로도 보내지 않아요. 외부와 연결하는 건 ① 공개 난수(drand) ② 전 세계 지진 데이터(USGS) ③ 저장소의 당첨번호 파일을 <b>받아 올 때뿐</b>이고, 이때도 내 정보는 함께 보내지 않아요. 로그인·광고·방문 추적도 없어요.</p>
+    </div>
+
+    <div class="card">
+      <h2>기록 백업 · 복원</h2>
+      <p class="muted">기록은 이 기기의 브라우저에만 저장돼서, 브라우저 기록을 지우거나 폰을 바꾸면 사라져요. 가끔 <b>백업 코드</b>를 복사해 카카오톡 '나와의 채팅'이나 메모에 붙여 두세요. 다른 기기에서 붙여 넣으면 그대로 옮겨져요.</p>
+      <div class="row"><button class="ghost" id="bkCopy">백업 코드 복사</button><button class="ghost" id="bkFile">백업 파일 저장</button></div>
+      <label>복원: 백업 코드를 붙여 넣거나 백업 파일을 고르세요</label>
+      <textarea id="bkIn" placeholder="SEOLLEM1:로 시작하는 코드" style="min-height:60px"></textarea>
+      <div class="row" style="margin-top:6px"><input type="file" id="bkFileIn" accept=".txt" style="flex:1"><button id="bkRestore">복원하기</button></div>
+    </div>
+
+  </div></div>
 
   <footer>
     로또 6/45의 1등 확률은 어떤 번호든 <b>8,145,060분의 1</b>이며, 어떤 렌즈도 당첨 확률을 높이지 않습니다.<br>
     패턴·궁합·마르코프 등 통계 렌즈는 과거 기록의 경향을 보여 줄 뿐, 백테스트에서 무작위보다 낫다는 근거는 확인되지 않았습니다.<br>
     인기 조합 회피는 당첨 시 <b>나눠 가질 가능성</b>을 줄이는 추정 모델이며 수익을 보장하지 않습니다.<br>
     로또는 만 19세 이상만 구매할 수 있습니다. 도박 문제로 힘드시면 <b>☎ 1336</b> (한국도박문제예방치유원, 24시간)<br>
-    일주일의 설렘 v0.4 · Oseong Vibe Coding EduHub · Creative Director K.G.B.
+    일주일의 설렘 v0.8 · Oseong Vibe Coding EduHub · Creative Director K.G.B.
   </footer>
 </div>
 
-<div class="toast" id="toast"></div>
-<div class="modal" id="modal"><div style="text-align:center"><img id="cardImg" alt="설렘 카드"><p class="muted">이미지를 길게 누르거나 우클릭해서 저장하세요</p><button class="ghost" id="modalClose">닫기</button></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="설렘 카드"><div style="text-align:center"><img id="cardImg" alt="이번 주 내 번호를 담은 설렘 카드"><p class="muted">이미지를 길게 누르거나 우클릭해서 저장하세요</p><div class="row" style="justify-content:center"><button id="cardShare">📤 카드 공유</button><button class="ghost" id="modalClose">닫기</button></div></div></div>
 
 <script>
 /* =========================================================
@@ -814,7 +999,7 @@ const LENS_NAME = Object.fromEntries(LENSES.map(l => [l.id, l.ic + ' ' + l.name]
 
 /* ---------- 저장 ---------- */
 const KEY = 'seollem.v1';
-let S = { budget: 5000, rounds: {}, fav: [], excl: [], words: '', wheelT: 3, perLens: 1, extra: {}, bt: null };
+let S = { budget: 5000, rounds: {}, fav: [], excl: [], words: '', wheelT: 3, perLens: 1, extra: {}, bt: null, view: 'simple' };
 try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 const W = weekInfo();
@@ -885,6 +1070,7 @@ async function autoUpdate() {
       // 새 회차가 없어도 '어떤 파일을 확인했는지'는 항상 보여 줌
       if (!r.added) { dataSrc = `내장 · 저장소 ${name} 확인, 최신 상태`; rebuildH(); }
       else toast(`최신 당첨번호 ${r.added}회차를 불러왔어요 (${name})`);
+      autoGrade(); prefillResult();
       return;
     } catch (e) {}
   }
@@ -892,7 +1078,7 @@ async function autoUpdate() {
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 3000); }
 const won = n => n.toLocaleString('ko-KR') + '원';
 const ballClass = n => n <= 10 ? 'b1' : n <= 20 ? 'b2' : n <= 30 ? 'b3' : n <= 40 ? 'b4' : 'b5';
-const ballHTML = (n, extra = '') => `<div class="ball ${ballClass(n)} ${extra}">${n}</div>`;
+const ballHTML = (n, extra = '') => `<div class="ball ${ballClass(n)} ${extra}" role="img" aria-label="${n}번${/hit/.test(extra) ? ', 맞음' : /bon/.test(extra) ? ', 보너스 일치' : ''}">${n}</div>`;
 const spent = r => r.sets.filter(s => s.bought).length * 1000;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -916,14 +1102,16 @@ let selPanel = PANEL_OF_DAY[W.dayIdx], storyDay = W.dayIdx;
 function renderWeek() {
   $('week').innerHTML = DAYS.map((d, i) => {
     const date = new Date(W.mon + i * DAY + KST);
-    return `<div class="day ${i === W.dayIdx ? 'today' : ''} ${PANEL_OF_DAY[i] === selPanel ? 'sel' : ''}" data-i="${i}"><b>${d}</b>${date.getUTCMonth()+1}/${date.getUTCDate()}</div>`;
+    return `<div class="day ${i === W.dayIdx ? 'today' : ''} ${PANEL_OF_DAY[i] === selPanel ? 'sel' : ''}" data-i="${i}" role="tab" tabindex="0" aria-selected="${PANEL_OF_DAY[i] === selPanel}" aria-label="${d}요일 ${date.getUTCMonth()+1}월 ${date.getUTCDate()}일${i === W.dayIdx ? ', 오늘' : ''}"><b>${d}</b>${date.getUTCMonth()+1}/${date.getUTCDate()}</div>`;
   }).join('');
-  document.querySelectorAll('.day').forEach(el => el.onclick = () => { selPanel = PANEL_OF_DAY[+el.dataset.i]; storyDay = +el.dataset.i; showPanel(); });
+  document.querySelectorAll('.day').forEach(el => { el.onclick = () => { selPanel = PANEL_OF_DAY[+el.dataset.i]; storyDay = +el.dataset.i; showPanel(); }; el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } }; });
 }
 function showPanel() {
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', +p.dataset.p === selPanel));
   if (selPanel === 0) fitCanvas();
   renderWeek(); if (selPanel === 1) renderDream(); if (selPanel === 3) renderRetro();
+  const none = !R().sets.length;
+  document.querySelectorAll('.nosets').forEach(el => el.style.display = none ? 'block' : 'none');
 }
 
 /* ---------- ③-월: 엔트로피 의식 ---------- */
@@ -951,7 +1139,8 @@ cv.addEventListener('pointermove', e => {
 
 /* 번호 설정: 한 번 누르면 선호, 두 번 누르면 제외, 세 번 누르면 해제 */
 function renderPicker() {
-  $('picker').innerHTML = Array.from({ length: 45 }, (_, i) => i + 1).map(n => `<div class="pk ${S.fav.includes(n) ? 'on ' + ballClass(n) : S.excl.includes(n) ? 'ex' : ''}" data-n="${n}">${n}</div>`).join('');
+  $('picker').innerHTML = Array.from({ length: 45 }, (_, i) => i + 1).map(n => { const st = S.fav.includes(n) ? '선호' : S.excl.includes(n) ? '제외' : '선택 안 함'; return `<div class="pk ${S.fav.includes(n) ? 'on ' + ballClass(n) : S.excl.includes(n) ? 'ex' : ''}" data-n="${n}" role="button" tabindex="0" aria-label="${n}번, ${st}. 누를 때마다 선호, 제외, 해제 순서로 바뀌어요">${n}</div>`; }).join('');
+  document.querySelectorAll('.pk').forEach(el => el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); setTimeout(() => { const nx = document.querySelector(`.pk[data-n="${el.dataset.n}"]`); if (nx) nx.focus(); }, 0); } });
   document.querySelectorAll('.pk').forEach(el => el.onclick = () => {
     const n = +el.dataset.n;
     if (S.fav.includes(n)) {
@@ -991,7 +1180,21 @@ async function gatherCosmic(seed) {
   return { seed: await ENGINE.sha256(new TextEncoder().encode(parts.join('|'))), info: info.join(' + ') };
 }
 
-async function birth(useRitual) {
+async function tryBirth(useRitual) {
+  const r = R();
+  if (r.sets.length) {
+    const nb = r.sets.filter(s => s.bought).length;
+    const k = await ask('이번 주 번호가 이미 있어요', nb
+      ? `<p>새로 만들면 지금 번호는 <b>🗂 보관함</b>으로 옮겨져요.<br>구매 표시한 <b>${nb}세트</b>는 어떻게 할까요?</p>`
+      : `<p>새로 만들면 지금 번호 ${r.sets.length}세트는 <b>🗂 보관함</b>으로 옮겨져요. 언제든 다시 꺼낼 수 있어요.</p>`,
+      nb ? [{ k: 'keep', label: `구매한 ${nb}세트는 남기고 새로 만들기` }, { k: 'all', label: '모두 보관하고 새로 만들기', ghost: true }, { k: 'no', label: '취소', ghost: true }]
+         : [{ k: 'all', label: '새로 만들기' }, { k: 'no', label: '취소', ghost: true }]);
+    if (k === 'no') return;
+    return birth(useRitual, k === 'keep');
+  }
+  return birth(useRitual, false);
+}
+async function birth(useRitual, keepBought) {
   // 씨앗 = SHA-256( 암호학적 난수 32바이트 ‖ 손끝 움직임 기록 ‖ 현재 시각 )
   const rnd = crypto.getRandomValues(new Uint8Array(32));
   const ev = new Float64Array(useRitual ? events : [performance.now()]);
@@ -1014,46 +1217,97 @@ async function birth(useRitual) {
     const h = ENGINE.hex(await ENGINE.sha256(new TextEncoder().encode(s.nums.join(',') + '|' + ENGINE.hex(seed))));
     s.fp = (h.slice(0, 4) + '-' + h.slice(4, 8)).toUpperCase(); s.bought = false;
   }
-  R().sets = sets; R().bornAt = Date.now(); R().dataN = H.length; R().cosmicInfo = cosmic.info; save();
+  const old = R().sets || [];
+  if (old.length) { R().archive = (R().archive || []).concat([{ at: R().bornAt || Date.now(), sets: old }]).slice(-10); }
+  const kept = keepBought ? old.filter(s => s.bought).map(s => Object.assign({}, s, { kept: true })) : [];
+  R().rec = null; R().sets = kept.concat(sets); R().bornAt = Date.now(); R().dataN = H.length; R().cosmicInfo = cosmic.info; save();
   events = []; $('entropyBar').style.width = '0%'; $('entropyTxt').textContent = '다시 휘저으면 새 번호를 만들 수 있어요'; $('quickBtn').disabled = false;
-  renderGallery(true); toast(`${sets.length}세트가 탄생했어요 ✨ 렌즈별로 비교해 보세요`);
+  renderGallery(true); toast(S.view === 'full' ? `${sets.length}세트가 탄생했어요 ✨ 렌즈별로 비교해 보세요` : `${sets.length}세트 중 추천 ${R().rec.length}세트를 골랐어요 ✨`);
 }
-$('birthBtn').onclick = () => birth(true);
-$('quickBtn').onclick = () => birth(false);
+$('birthBtn').onclick = () => tryBirth(true);
+$('quickBtn').onclick = () => tryBirth(false);
 
+// 세트 태그: 아이콘 + 짧은 값만 보이고, 자세한 설명은 탭(휴대폰)하거나 마우스를 올리면(PC) 말풍선으로 나타남
 function setMetaHTML(s) {
-  return `<span class="pill pg">대중 선호 하위 ${(s.pct * 100).toFixed(1)}%</span>
-    <span class="pill py">당첨 시 몫 ×${s.mult.toFixed(2)}</span>
-    ${s.pat != null ? `<span class="pill pb">패턴 ${Math.round(s.pat * 100)}점</span>` : ''}
-    <span class="pill ${s.bal.length ? 'pr' : 'pg'}">${s.bal.length ? '균형 이탈: ' + s.bal.join('·') : '균형 9항목 통과'}</span>`;
+  const pct = s.pct * 100;
+  const bal = s.bal.length
+    ? `<span class="tag-mini pr" data-tip="균형 필터에서 벗어난 항목: ${s.bal.join(', ')}">⚖️ ${s.bal.join('·')}</span>`
+    : `<span class="tag-mini pg" data-tip="합계·홀짝·고저·AC·연번·끝수·번호대·과열·엔트로피 9항목 모두 통과">⚖️ 통과</span>`;
+  return `<span class="tag-mini pg" data-tip="대중이 이 조합을 고르는 정도: 무작위 조합 중 하위 ${pct.toFixed(1)}% (낮을수록 덜 고름)">👥 하위 ${pct < 10 ? pct.toFixed(1) : pct.toFixed(0)}%</span>
+    <span class="tag-mini py" data-tip="1등 당첨 시 무작위 조합 대비 예상 몫 (LOTTO LAB 실측 인기도 모델 추정)">💰 ×${s.mult.toFixed(2)}</span>
+    ${s.pat != null ? `<span class="tag-mini pb" data-tip="빈도·최근·간격·모멘텀·마르코프 5종 패턴 점수 평균 (0~100)">📈 ${Math.round(s.pat * 100)}</span>` : ''}
+    ${bal}`;
 }
+/* 간단 모드: 만들어진 모든 세트 중, 렌즈가 겹치지 않게 '하나라도 5등 이상' 확률이 가장 커지는 K세트를 추천 */
+function recommend(sets, K) {
+  if (!sets.length) return [];
+  const M = ENGINE.hitMatrix(sets.map(s => s.nums), ENGINE.simDraws(12000)), n = M[0].length, hit = new Uint8Array(n), out = [], used = new Set();
+  while (out.length < Math.min(K, sets.length)) {
+    let bi = -1, bg = -1;
+    const lensFree = sets.some((s, i) => !out.includes(i) && !used.has(s.lens));
+    sets.forEach((s, i) => {
+      if (out.includes(i) || (lensFree && used.has(s.lens))) return;
+      let g = 0; for (let j = 0; j < n; j++) if (M[i][j] && !hit[j]) g++;
+      if (g > bg) { bg = g; bi = i; }
+    });
+    out.push(bi); used.add(sets[bi].lens); for (let j = 0; j < n; j++) if (M[bi][j]) hit[j] = 1;
+  }
+  return out;
+}
+const recK = () => Math.max(1, Math.min(5, Math.floor(S.budget / 1000)));
+function setItem(s, i, animate, showLens, isRec) {
+  return `<div class="${showLens ? 'recset' : 'set'}">
+    ${showLens ? `<div style="margin-bottom:6px"><b>${LENS_NAME[s.lens]}</b>${s.kept ? '<span class="rec-badge">지난 구매 유지</span>' : ''}</div>` : ''}
+    <div class="balls" style="margin:0">${s.nums.map(n => ballHTML(n, animate ? 'pop' : '')).join('')}</div>
+    <div class="meta" style="margin-top:6px">${isRec && !showLens ? '<span class="rec-badge">⭐ 추천</span>' : ''}${setMetaHTML(s)}<span class="fp" data-tip="설렘 지문: 번호와 나의 씨앗으로 만든 고유 표시예요. 같은 지문은 다시 나오지 않아요.">#${s.fp}</span></div>
+    <label style="margin-top:6px"><input type="checkbox" data-b="${i}" ${s.bought ? 'checked' : ''} style="width:auto"> 이 세트 구매함 (1,000원)</label>
+  </div>`;
+}
+$('viewBtn').onclick = () => { S.view = S.view === 'full' ? 'simple' : 'full'; save(); renderGallery(false); };
 function renderGallery(animate) {
-  const r = R(); if (!r.sets.length) { $('galleryCard').style.display = 'none'; return; }
-  $('galleryCard').style.display = 'block';
-  const bt = S.bt && S.bt.rows ? Object.fromEntries(S.bt.rows.map(x => [x.id, x])) : {};
-  $('gallery').innerHTML = LENSES.filter(l => r.sets.some(s => s.lens === l.id)).map(l => `
+  const r = R(), has = r.sets.length > 0;
+  $('galleryCard').style.display = has ? 'block' : 'none';
+  $('summaryCard').style.display = has ? 'block' : 'none';
+  $('emptyCard').style.display = has ? 'none' : '';
+  if (!has) return;
+  if (!r.rec || r.rec.some(i => i >= r.sets.length)) { r.rec = recommend(r.sets, recK()); save(); }
+  const full = S.view === 'full', recSet = new Set(r.rec);
+  $('viewBtn').textContent = full ? '⭐ 추천만 간단히 보기 ▴' : `${new Set(r.sets.map(s => s.lens)).size}가지 렌즈 전체 보기 ▾`;
+  $('galTitle').textContent = full ? '이번 주 렌즈 갤러리' : `⭐ 이번 주 추천 ${r.rec.length}세트`;
+  $('galDesc').innerHTML = full
+    ? '같은 질문, "어떤 6개?"에 여러 관점이 각자 답했어요. ⭐는 추천 세트예요. 태그를 누르면(PC는 마우스를 올리면) 설명이 보여요.'
+    : `만든 <b>${r.sets.length}세트</b> 중에서 렌즈가 겹치지 않게, 함께 샀을 때 '하나라도 5등 이상' 확률이 가장 커지는 조합을 골랐어요. 마음에 들면 <b>구매함</b>을 체크하세요.`;
+  if (!full) {
+    $('gallery').classList.add('simple');
+    $('gallery').innerHTML = `<div class="recgrid">${r.rec.map(i => setItem(r.sets[i], i, animate, true, true)).join('')}</div>
+      <div class="row" style="margin-top:6px"><button class="ghost" id="recAll">추천 ${r.rec.length}세트 모두 구매 표시</button></div>`;
+    $('recAll').onclick = () => {
+      if ((r.rec.length + r.sets.filter((s, i) => s.bought && !recSet.has(i)).length) * 1000 > S.budget) { toast('예산을 넘어요 · 다른 구매 표시를 먼저 풀어 주세요'); return; }
+      r.rec.forEach(i => r.sets[i].bought = true); save(); renderGallery(false); tickHero();
+    };
+  } else {
+    const bt = S.bt && S.bt.rows ? Object.fromEntries(S.bt.rows.map(x => [x.id, x])) : {};
+    $('gallery').classList.remove('simple');
+    $('gallery').innerHTML = LENSES.filter(l => r.sets.some(s => s.lens === l.id)).map(l => `
     <details class="lens" open>
       <summary class="lens-h"><span class="ic">${l.ic}</span><div class="grow"><b>${l.name}</b><span class="tag pill ${l.tag[0]}">${l.tag[1]}</span>
         <div class="muted" style="font-size:.8rem">${l.desc}${l.id === 'cosmic' && r.cosmicInfo ? ` <b>이번 씨앗: ${r.cosmicInfo}</b>` : ''}${l.id === 'word' && r.words ? ` <b>단어: ${esc(r.words)}</b>` : ''}${l.id === 'wheel' && r.wheelInfo ? ` <b>선호 ${r.wheelInfo.v}개 중 ${r.wheelInfo.t}개가 나오면 ${r.wheelInfo.t === 3 ? '5등' : '4등'} 이상 1장 보장 · ${r.wheelInfo.n}장</b>` : ''}${bt[l.id] ? ` · 백테스트 평균 ${bt[l.id].mean.toFixed(2)}개` : ''}</div></div></summary>
-      ${r.sets.map((s, i) => s.lens !== l.id ? '' : `
-        <div class="set">
-          <div class="balls" style="margin:0">${s.nums.map(n => ballHTML(n, animate ? 'pop' : '')).join('')}</div>
-          <div class="meta" style="margin-top:6px">${setMetaHTML(s)}<span class="fp">설렘 지문 #${s.fp}</span></div>
-          <label style="margin-top:6px"><input type="checkbox" data-b="${i}" ${s.bought ? 'checked' : ''} style="width:auto"> 이 세트 구매함 (1,000원)</label>
-        </div>`).join('')}
+      ${r.sets.map((s, i) => s.lens !== l.id ? '' : setItem(s, i, animate, false, recSet.has(i))).join('')}
     </details>`).join('');
+  }
   document.querySelectorAll('[data-b]').forEach(cb => cb.onchange = () => {
     const s = r.sets[+cb.dataset.b];
     if (cb.checked && spent(r) + 1000 > S.budget) { cb.checked = false; toast('이번 주 설렘은 이미 충분해요 · 예산 가드가 지켜 드릴게요'); return; }
     s.bought = cb.checked; save(); updateProb(); tickHero();
   });
-  updateProb(); renderCovK();
+  updateProb(); renderCovK(); renderArchN();
 }
 function updateProb() {
   const n = R().sets.filter(s => s.bought).length;
   $('boughtN').textContent = n;
   $('anyProb').textContent = n ? (ENGINE.pAnyN(n) * 100).toFixed(1) + '%' : '0%';
   $('p1').textContent = n ? `${Math.round(ENGINE.C45_6 / n).toLocaleString()}분의 1` : '구매 표시를 해 보세요';
+  careCheck();
 }
 function renderCovK() {
   const r = R(), max = Math.min(r.sets.length, Math.floor(S.budget / 1000), 20);
@@ -1075,7 +1329,19 @@ $('covBtn').onclick = async () => {
   $('covOut').innerHTML = `${K}세트로 '하나라도 5등 이상' 확률 <b>${(after * 100).toFixed(1)}%</b>${before != null ? ` (이전 구매 표시 ${prev.length}세트: ${(before * 100).toFixed(1)}%)` : ''} · 서로 독립인 ${K}세트의 이론값 ${(ENGINE.pAnyN(K) * 100).toFixed(1)}% · 새 가상 추첨 4만 회로 잰 값이라 ±0.3%p 정도 흔들려요.`;
   $('covBtn').disabled = false;
 };
-const chosenSets = () => { const b = R().sets.filter(s => s.bought); return b.length ? b : R().sets; };
+const chosenSets = () => { const r = R(), b = r.sets.filter(s => s.bought); return b.length ? b : (r.rec || []).map(i => r.sets[i]).filter(Boolean); };
+$('slipBtn').onclick = () => {
+  const sets = chosenSets(), bought = R().sets.some(s => s.bought);
+  if (!sets.length) { toast('먼저 번호를 만들어 주세요'); return; }
+  const slips = []; for (let i = 0; i < sets.length; i += 5) slips.push(sets.slice(i, i + 5));
+  $('slipBody').innerHTML = `<p class="muted">${bought ? '구매 표시한' : '추천'} ${sets.length}세트 · 용지 ${slips.length}장</p>` + slips.map((sl, si) => `
+    <div class="slip">${sl.map((s, gi) => `<div class="slip-game"><b>${String.fromCharCode(65 + gi)} 게임</b>
+      <div class="slip-grid">${Array.from({ length: 45 }, (_, k) => k + 1).map(n => `<span class="${s.nums.includes(n) ? 'mk' : ''}">${n}</span>`).join('')}</div>
+      <div class="slip-nums">${s.nums.join(' · ')}</div></div>`).join('')}</div>`).join('') +
+    '<p class="muted" style="font-size:.8rem">용지는 컴퓨터용 사인펜으로 칸 안을 꽉 채워 칠해요. 모바일·인터넷 구매는 번호를 복사해서 직접 입력하세요.</p>';
+  $('slipModal').classList.add('on');
+};
+$('slipClose').onclick = () => $('slipModal').classList.remove('on');
 $('copyBtn').onclick = async () => {
   const txt = chosenSets().map(s => `${s.nums.join(', ')}  (${LENS_NAME[s.lens]})`).join('\n');
   try { await navigator.clipboard.writeText(txt); toast('번호를 복사했어요'); } catch (e) { toast('복사가 막혀 있어요: ' + txt.replace(/\n/g, ' / ')); }
@@ -1104,6 +1370,211 @@ $('cardBtn').onclick = () => {
   $('cardImg').src = c.toDataURL('image/png'); $('modal').classList.add('on');
 };
 $('modalClose').onclick = () => $('modal').classList.remove('on');
+
+/* ---------- v0.7 공용: 확인 창 ---------- */
+function ask(title, body, buttons) {
+  return new Promise(resolve => {
+    $('askTitle').textContent = title; $('askBody').innerHTML = body;
+    $('askBtns').innerHTML = buttons.map((b, i) => `<button class="${b.ghost ? 'ghost' : ''}" data-k="${i}">${b.label}</button>`).join('');
+    $('askModal').classList.add('on');
+    $('askBtns').querySelectorAll('button').forEach(el => el.onclick = () => { $('askModal').classList.remove('on'); resolve(buttons[+el.dataset.k].k); });
+  });
+}
+
+/* ---------- v0.7 말풍선: 휴대폰은 탭, PC는 마우스 올리기 ---------- */
+function showTip(el) {
+  const t = $('tip'); t.textContent = el.dataset.tip; t.style.display = 'block';
+  const r = el.getBoundingClientRect(), w = t.offsetWidth, h = t.offsetHeight;
+  let x = Math.min(window.innerWidth - w - 8, Math.max(8, r.left + r.width / 2 - w / 2)), y = r.top - h - 8;
+  if (y < 8) y = r.bottom + 8;
+  t.style.left = x + 'px'; t.style.top = y + 'px';
+}
+const hideTip = () => { $('tip').style.display = 'none'; };
+document.addEventListener('click', e => { const el = e.target.closest('[data-tip]'); if (el) { e.preventDefault(); showTip(el); } else hideTip(); });
+document.addEventListener('mouseover', e => { const el = e.target.closest('[data-tip]'); if (el && matchMedia('(hover:hover)').matches) showTip(el); });
+document.addEventListener('mouseout', e => { if (e.target.closest('[data-tip]') && matchMedia('(hover:hover)').matches) hideTip(); });
+window.addEventListener('scroll', hideTip, { passive: true });
+
+/* ---------- v0.7 보관함 ---------- */
+function renderArchN() { const n = (R().archive || []).length; $('archN').textContent = n ? `(${n})` : ''; }
+$('archBtn').onclick = () => {
+  const a = R().archive || [];
+  $('archList').innerHTML = a.length ? a.slice().reverse().map((b, ri) => {
+    const i = a.length - 1 - ri, t = new Date(b.at + KST);
+    return `<div class="arch"><div class="row"><b class="grow">${t.getUTCMonth() + 1}/${t.getUTCDate()} ${String(t.getUTCHours()).padStart(2, '0')}:${String(t.getUTCMinutes()).padStart(2, '0')} · ${b.sets.length}세트${b.sets.some(s => s.bought) ? ` (구매 표시 ${b.sets.filter(s => s.bought).length})` : ''}</b><button class="ghost" data-ar="${i}">다시 꺼내기</button></div>
+      <div class="muted" style="font-size:.85rem;margin-top:4px">${b.sets.slice(0, 6).map(s => s.nums.join(' ')).join(' · ')}${b.sets.length > 6 ? ' …' : ''}</div></div>`;
+  }).join('') : '<p class="muted">아직 보관된 번호가 없어요.</p>';
+  $('archList').querySelectorAll('[data-ar]').forEach(el => el.onclick = () => {
+    const r = R(), b = r.archive[+el.dataset.ar], have = new Set(r.sets.map(s => s.nums.join()));
+    const add = b.sets.filter(s => !have.has(s.nums.join())).map(s => Object.assign({}, s, { bought: false }));
+    r.sets = r.sets.concat(add); r.rec = null; save(); renderGallery(false); $('archModal').classList.remove('on');
+    toast(add.length ? `보관함에서 ${add.length}세트를 꺼냈어요 (구매 표시는 다시 해 주세요)` : '이미 이번 주 번호에 모두 있어요');
+  });
+  $('archModal').classList.add('on');
+};
+$('archClose').onclick = () => $('archModal').classList.remove('on');
+document.querySelectorAll('.goMake').forEach(b => b.onclick = () => { selPanel = 0; showPanel(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+/* ---------- v0.7 백업 · 복원 ---------- */
+const backupCode = () => 'SEOLLEM1:' + btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+$('bkCopy').onclick = async () => {
+  const code = backupCode();
+  try { await navigator.clipboard.writeText(code); toast('백업 코드를 복사했어요 · 메모나 카톡에 붙여 두세요'); }
+  catch (e) { $('bkIn').value = code; $('bkIn').select(); toast('자동 복사가 막혀 있어요 · 아래 칸의 코드를 직접 복사해 주세요'); }
+};
+$('bkFile').onclick = () => {
+  try {
+    const a = document.createElement('a'), d = new Date(Date.now() + KST);
+    a.href = URL.createObjectURL(new Blob([backupCode()], { type: 'text/plain' }));
+    a.download = `일주일의설렘_백업_${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}.txt`;
+    document.body.appendChild(a); a.click(); a.remove(); toast('백업 파일을 저장했어요');
+  } catch (e) { toast('이 화면에서는 파일 저장이 막혀 있어요 · 백업 코드 복사를 이용해 주세요'); }
+};
+$('bkFileIn').onchange = async e => { const f = e.target.files[0]; if (f) $('bkIn').value = (await f.text()).trim(); };
+$('bkRestore').onclick = async () => {
+  const code = $('bkIn').value.trim();
+  let data = null;
+  try { if (!code.startsWith('SEOLLEM1:')) throw 0; data = JSON.parse(decodeURIComponent(escape(atob(code.slice(9))))); if (!data || typeof data.rounds !== 'object') throw 0; }
+  catch (e) { toast('백업 코드를 읽지 못했어요 · SEOLLEM1:로 시작하는 코드 전체를 붙여 넣어 주세요'); return; }
+  const n = Object.keys(data.rounds).length;
+  const k = await ask('기록을 복원할까요?', `<p>백업에는 <b>${n}주</b>의 기록이 있어요. 복원하면 <b>지금 이 기기의 기록은 백업 내용으로 바뀌어요.</b></p>`,
+    [{ k: 'ok', label: '복원하기' }, { k: 'no', label: '취소', ghost: true }]);
+  if (k !== 'ok') return;
+  S = Object.assign({ budget: 5000, rounds: {}, fav: [], excl: [], words: '', wheelT: 3, perLens: 1, extra: {}, bt: null }, data); save();
+  toast('복원했어요 · 화면을 새로 고칠게요'); setTimeout(() => location.reload(), 900);
+};
+
+/* ---------- v0.7 데이터 지연 알림 ---------- */
+const drawTimeOf = r => BASE_DRAW + (r - BASE_ROUND) * WEEK;
+function checkLag() {
+  const now = Date.now(), lastDrawn = now >= W.draw ? W.round : W.round - 1, lag = lastDrawn - H.length;
+  const hrs = (now - drawTimeOf(lastDrawn)) / 3600e3;
+  const show = lag >= 2 || (lag === 1 && hrs > 30);          // 추첨 직후(관리자가 올리기 전)는 알리지 않음
+  $('notice').style.display = show ? 'block' : 'none';
+  if (show) $('notice').innerHTML = `📅 최신 당첨번호가 <b>${lag}회차</b> 늦게 반영돼 있어요(제${H.length}회까지). 분석은 조금 지난 데이터로 이뤄지고, 토요일 결과는 직접 입력하면 돼요.`;
+}
+$('gearBtn').onclick = () => $('setModal').classList.add('on');
+
+/* ---------- v0.8 큰 글씨 ---------- */
+function applyBig() {
+  document.documentElement.classList.toggle('bigtext', !!S.big);
+  $('bigBtn').setAttribute('aria-pressed', String(!!S.big)); $('bigCb').checked = !!S.big;
+  setTimeout(fitCanvas, 50);
+}
+$('bigBtn').onclick = () => { S.big = !S.big; save(); applyBig(); toast(S.big ? '글씨를 크게 바꿨어요' : '기본 글씨로 돌아왔어요'); };
+$('bigCb').onchange = e => { S.big = e.target.checked; save(); applyBig(); };
+
+/* ---------- v0.8 공유 (휴대폰 공유 창 → 카카오톡 등) ---------- */
+const APP_URL = () => location.href.split('#')[0].split('?')[0];
+$('shareBtn').onclick = async () => {
+  const data = { title: '일주일의 설렘', text: '세상에 하나뿐인 로또 번호로, 부담 없이 설레는 일주일 🍀', url: APP_URL() };
+  try { if (navigator.share) { await navigator.share(data); return; } } catch (e) { if (e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(`${data.text}\n${data.url}`); toast('앱 링크를 복사했어요 · 카톡에 붙여 넣어 보내세요'); }
+  catch (e) { toast('링크: ' + data.url); }
+};
+$('cardShare').onclick = async () => {
+  try {
+    const blob = await (await fetch($('cardImg').src)).blob(), file = new File([blob], '일주일의설렘_카드.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: '일주일의 설렘', text: APP_URL() }); return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); toast('카드 이미지를 저장했어요');
+  } catch (e) { if (e && e.name === 'AbortError') return; toast('이 화면에서는 공유가 막혀 있어요 · 이미지를 길게 눌러 저장해 주세요'); }
+};
+
+/* ---------- v0.8 캘린더 알림 (.ics): 매주 토요일 18:00 '구매 마감 2시간 전' + 20:35 '운명의 공개' ---------- */
+function icsFile() {
+  const nextSat = new Date(W.draw + KST), ymd = `${nextSat.getUTCFullYear()}${String(nextSat.getUTCMonth() + 1).padStart(2, '0')}${String(nextSat.getUTCDate()).padStart(2, '0')}`;
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Oseong Vibe Coding EduHub//Weekly Seollem//KO', 'CALSCALE:GREGORIAN',
+    'BEGIN:VTIMEZONE', 'TZID:Asia/Seoul', 'BEGIN:STANDARD', 'DTSTART:19700101T000000', 'TZOFFSETFROM:+0900', 'TZOFFSETTO:+0900', 'TZNAME:KST', 'END:STANDARD', 'END:VTIMEZONE',
+    'BEGIN:VEVENT', `UID:weekly-seollem-${ymd}@kkbhong71.github.io`, `DTSTAMP:${stamp}`,
+    `DTSTART;TZID=Asia/Seoul:${ymd}T203500`, `DTEND;TZID=Asia/Seoul:${ymd}T205000`, 'RRULE:FREQ=WEEKLY;BYDAY=SA',
+    'SUMMARY:🍀 일주일의 설렘 · 운명의 공개', `DESCRIPTION:로또 추첨 20:35 · 결과 확인: ${APP_URL()}\\n판매 마감은 20:00이에요. 예산 안에서만 즐겨요 (도박문제 상담 1336)`, `URL:${APP_URL()}`,
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:로또 판매 마감 2시간 전이에요 (20:00 마감)', 'TRIGGER:-PT155M', 'END:VALARM',
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:곧 추첨! 일주일의 설렘에서 결과를 확인해 보세요', 'TRIGGER:PT0M', 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+}
+function downloadIcs() {
+  try {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([icsFile()], { type: 'text/calendar;charset=utf-8' }));
+    a.download = '일주일의설렘_토요일알림.ics'; document.body.appendChild(a); a.click(); a.remove();
+    toast('알림 파일을 받았어요 · 열면 캘린더에 매주 토요일 알림이 등록돼요');
+  } catch (e) { toast('이 화면에서는 파일 저장이 막혀 있어요 · 배포된 앱 주소에서 다시 눌러 주세요'); }
+}
+$('icsBtn').onclick = downloadIcs; $('icsBtn2').onclick = downloadIcs;
+
+/* ---------- v0.8 홈 화면에 설치(PWA) ---------- */
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('installBtn').style.display = ''; });
+$('installBtn').onclick = async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt = null; $('installBtn').style.display = 'none'; };
+$('installTip').innerHTML = /iphone|ipad|ipod/i.test(navigator.userAgent)
+  ? '📲 아이폰: Safari 아래쪽 <b>공유 버튼 → 홈 화면에 추가</b>를 누르면 앱처럼 쓸 수 있어요.'
+  : '📲 안드로이드·PC: 크롬 메뉴(⋮) → <b>앱 설치</b> 또는 <b>홈 화면에 추가</b>로 앱처럼 쓸 수 있어요.';
+if ('serviceWorker' in navigator && location.protocol === 'https:' && /github\.io$/.test(location.hostname)) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+/* ---------- v0.8 건강하게 즐기기: 이번 달 누적 · 연속 예산 소진 알림 ---------- */
+function careCheck() {
+  const now = new Date(Date.now() + KST), ym = now.getUTCFullYear() * 12 + now.getUTCMonth();
+  let month = 0;
+  for (const k of Object.keys(S.rounds).map(Number)) { const d = new Date(drawTimeOf(k) + KST); if (d.getUTCFullYear() * 12 + d.getUTCMonth() === ym) month += spent(S.rounds[k]); }
+  $('monthSpent').textContent = won(month);
+  let streak = 0;                                          // 이번 주부터 거꾸로, 예산을 꽉 채운 주가 몇 주 연속인지
+  for (let k = W.round; S.rounds[k] && spent(S.rounds[k]) >= S.budget && S.budget > 0; k--) streak++;
+  const show = streak >= 3;
+  $('careNote').style.display = show ? 'block' : 'none';
+  if (show) $('careNote').innerHTML = `🌿 <b>${streak}주 연속</b> 예산을 꽉 채웠어요. 이번 주는 한두 세트만 사거나, 한 주 쉬어 가는 건 어때요? 설렘은 금액과 상관없어요. 힘들 땐 ☎ <b>1336</b>`;
+}
+
+/* ---------- ⓪ 처음 사용자 안내 (아주 쉽게, 한 장에 한 가지) ---------- */
+const GUIDE = [
+  { e: '🍀', t: '일주일의 설렘에 오신 걸 환영해요',
+    b: `<p>로또 번호를 <b>세상에 하나뿐인 번호</b>로 만들고,<br>일주일 동안 <b>부담 없이 설레는</b> 앱이에요.</p>
+        <p class="g-small">설치도, 회원가입도 필요 없어요.<br>번호와 기록은 이 기기에만 저장되고, 서버로 보내지 않아요.</p>` },
+  { e: '✨', t: '번호 만들기 · 언제든 OK',
+    b: `<div class="g-steps">① <b>밤하늘 칸</b>을 손가락으로 쓱쓱 문질러요<br>② 아래 막대가 다 차면 <b>번호 탄생</b>을 눌러요<br>③ 마음에 드는 번호에 <b>구매함</b> 체크!</div>
+        <p class="g-small">요일 상관없이 언제든 만들 수 있어요(보통 월요일).<br>급하면 <b>빠르게</b> 버튼만 눌러도 돼요.</p>` },
+  { e: '💌', t: '화~금 · 꿈 적어 두기',
+    b: `<p><b>드림 캡슐</b>에 두 가지를 적어요.</p>
+        <div class="g-steps">🌟 당첨되면 하고 싶은 일<br>🌱 1,000원으로 할 수 있는 작은 꿈</div>
+        <p class="g-small">캡슐은 토요일 추첨 순간까지 잠겨 있어요.</p>` },
+  { e: '🎯', t: '토요일 · 결과 확인',
+    b: `<p>밤 <b>8시 35분</b> 추첨이 끝나면<br>당첨번호를 입력하고 <b>운명의 공개</b>를 눌러요.</p>
+        <p class="g-small">공이 하나씩 떨어지며 내 번호와 맞춰 봐요.</p>` },
+  { e: '🌱', t: '일요일 · 작은 꿈 이루기',
+    b: `<p>결과와 상관없이, 적어 둔 <b>작은 꿈</b>을<br>오늘 하나 이뤄 봐요.</p>
+        <p class="g-small">그동안의 기록과 '렌즈 리그' 성적도 볼 수 있어요.</p>` },
+  { e: '🤝', t: '꼭 기억해 주세요',
+    b: `<div class="g-promise">🎲 어떤 방법도 1등 확률(<b>8,145,060분의 1</b>)을 높이지는 못해요.<br>💰 <b>⚙️ 설정</b>에서 일주일 예산을 정하고, 그 안에서만 즐겨요.<br>🔞 로또는 만 19세 이상만 살 수 있어요.<br>🅰️ 글씨가 작으면 위의 <b>가+ 큰 글씨</b>를 눌러요.<br>☎ 힘들 땐 <b>1336</b> (24시간 상담)</div>` }
+];
+let gIdx = 0;
+function renderGuide() {
+  const g = GUIDE[gIdx], last = gIdx === GUIDE.length - 1;
+  $('gStep').textContent = `${gIdx + 1} / ${GUIDE.length}`;
+  $('gBody').innerHTML = `<div class="g-emoji">${g.e}</div><h3>${g.t}</h3>${g.b}`;
+  $('gBody').style.animation = 'none'; void $('gBody').offsetWidth; $('gBody').style.animation = '';
+  $('gDots').innerHTML = GUIDE.map((_, i) => `<i class="${i === gIdx ? 'on' : ''}"></i>`).join('');
+  $('gPrev').style.visibility = gIdx ? 'visible' : 'hidden';
+  $('gNext').textContent = last ? '번호 만들러 가기 ✨' : '다음 →';
+  $('gSkip').style.visibility = last ? 'hidden' : 'visible';
+}
+function openGuide() { gIdx = 0; renderGuide(); $('guide').classList.add('on'); }
+function closeGuide(goMonday) {
+  $('guide').classList.remove('on'); S.seenGuide = true; save();
+  if (goMonday) { selPanel = 0; showPanel(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+}
+$('helpBtn').onclick = openGuide;
+$('gPrev').onclick = () => { if (gIdx > 0) { gIdx--; renderGuide(); } };
+$('gNext').onclick = () => { if (gIdx < GUIDE.length - 1) { gIdx++; renderGuide(); } else closeGuide(true); };
+$('gSkip').onclick = () => closeGuide(false);
+document.addEventListener('keydown', e => {
+  if (!$('guide').classList.contains('on')) return;
+  if (e.key === 'ArrowRight') $('gNext').click(); else if (e.key === 'ArrowLeft') $('gPrev').click(); else if (e.key === 'Escape') closeGuide(false);
+});
+// 휴대폰: 좌우로 밀어서 넘기기
+let gx = null;
+$('guide').addEventListener('touchstart', e => gx = e.touches[0].clientX, { passive: true });
+$('guide').addEventListener('touchend', e => { if (gx == null) return; const dx = e.changedTouches[0].clientX - gx; if (Math.abs(dx) > 50) (dx < 0 ? $('gNext') : $('gPrev')).click(); gx = null; });
+$('setClose').onclick = () => $('setModal').classList.remove('on');
+$('setModal').onclick = e => { if (e.target.id === 'setModal') $('setModal').classList.remove('on'); };
 
 /* ---------- ③-화~금: 드림 위크 ---------- */
 const STORIES = [
@@ -1156,8 +1627,9 @@ function renderDream() {
 /* ---------- ③-토: 운명의 공개 ---------- */
 const parseNums = t => (t.match(/\d+/g) || []).map(Number).filter(n => n >= 1 && n <= 45);
 $('revealBtn').onclick = async () => {
-  const win = [...new Set(parseNums($('winIn').value))], bonus = parseNums($('bonusIn').value)[0];
-  if (win.length !== 6 || !bonus || win.includes(bonus)) { toast('당첨번호 6개와 겹치지 않는 보너스 번호를 입력해 주세요'); return; }
+  const win = [...new Set(parseNums($('winIn').value))], bonus = parseNums($('bonusIn').value)[0] || null;
+  if (win.length !== 6) { toast('당첨번호 6개를 입력해 주세요'); return; }
+  if (bonus && win.includes(bonus)) { toast('보너스 번호는 당첨번호 6개와 겹칠 수 없어요'); return; }
   const r = R(); r.result = { win: win.sort((a, b) => a - b), bonus };
   if (W.round === H.length + 1 || S.extra[W.round]) { S.extra[W.round] = r.result.win; rebuildH(); }
   save();
@@ -1165,17 +1637,18 @@ $('revealBtn').onclick = async () => {
   $('revealBtn').disabled = true; $('revealBalls').innerHTML = ''; $('revealSummary').innerHTML = '';
   $('revealSets').innerHTML = r.sets.map((s, i) => `<div class="set"><b>${LENS_NAME[s.lens]}</b>${s.bought ? ' <span class="pill py">구매</span>' : ''}<div class="balls">${s.nums.map(n => ballHTML(n, 'dim')).join('')}</div><div class="rank" id="rk${i}"></div></div>`).join('');
   const nodes = [...document.querySelectorAll('#revealSets .set')];
-  for (const n of [...r.result.win, bonus]) {
+  for (const n of bonus ? [...r.result.win, bonus] : r.result.win) {
     await new Promise(res => setTimeout(res, 900));
     $('revealBalls').insertAdjacentHTML('beforeend', (n === bonus ? '<span class="muted" style="align-self:center">+ 보너스</span>' : '') + ballHTML(n, 'pop'));
-    r.sets.forEach((s, i) => s.nums.forEach((x, k) => { if (x === n) nodes[i].querySelectorAll('.ball')[k].classList.replace('dim', 'hit'); }));
+    r.sets.forEach((s, i) => s.nums.forEach((x, k) => { if (x === n) { const el = nodes[i].querySelectorAll('.ball')[k]; el.classList.replace('dim', n === bonus ? 'bon' : 'hit'); el.setAttribute('aria-label', `${n}번, ${n === bonus ? '보너스 일치' : '맞음'}`); } }));   // 보너스는 점선으로 구분(2등 판정에만 쓰임)
   }
   let prize = 0, best = 0;
   r.sets.forEach((s, i) => {
     const { m, r: rk } = ENGINE.rank(s.nums, r.result.win, bonus); s.match = m; s.rank = rk;
     if (s.bought && ENGINE.PRIZE[rk]) prize += ENGINE.PRIZE[rk];
     if (rk && (!best || rk < best)) best = rk;
-    $('rk' + i).innerHTML = rk ? `<span style="color:var(--gold)">🎉 ${rk}등! (${m}개 일치)</span>${s.bought ? '' : ' <span class="muted">(구매 안 함)</span>'}` : `<span class="muted">${m}개 일치</span>`;
+    const maybe2 = rk === 3 && !bonus ? ' <span class="muted">(보너스 번호를 넣으면 2등인지 알 수 있어요)</span>' : '';
+    $('rk' + i).innerHTML = rk ? `<span style="color:var(--gold)">🎉 ${rk}등! (${m}개 일치)</span>${maybe2}${s.bought ? '' : ' <span class="muted">(구매 안 함)</span>'}` : `<span class="muted">${m}개 일치</span>`;
   });
   r.prize = prize; save();
   $('revealSummary').innerHTML = `<div class="card" style="text-align:center">${best ? `<div class="big">${best}등이 나왔어요!</div>` : '<div class="serif" style="font-size:1.2rem">이번 주는 우주가 다른 사람을 골랐네요</div>'}
@@ -1183,6 +1656,29 @@ $('revealBtn').onclick = async () => {
     <div class="muted" style="margin-top:6px">렌즈별 성적은 일요일 '나의 실전 리그'에 쌓여요 · 내일은 작은 꿈을 이루는 날 🌱</div></div>`;
   $('revealBtn').disabled = false;
 };
+
+// 지난 회차 자동 채점: 저장소 데이터에 그 회차 당첨번호가 들어오면, 결과를 입력하지 않은 주도 자동으로 채점
+function autoGrade() {
+  let n = 0;
+  for (const k of Object.keys(S.rounds).map(Number)) {
+    const x = S.rounds[k];
+    if (!x.sets.length || x.result || k > H.length) continue;
+    const win = H[k - 1]; x.result = { win, bonus: null, auto: true }; let prize = 0;
+    x.sets.forEach(s => { const g = ENGINE.rank(s.nums, win, null); s.match = g.m; s.rank = g.r; if (s.bought && ENGINE.PRIZE[g.r]) prize += ENGINE.PRIZE[g.r]; });
+    x.prize = prize; n++;
+  }
+  if (n) { save(); toast(`지난 ${n}개 회차를 자동으로 채점했어요 · 일요일 화면에서 확인하세요`); }
+}
+// 토요일 화면: 이번 회차 당첨번호가 데이터에 있으면 미리 채워 둠(보너스만 확인)
+function prefillResult() {
+  const r = R();
+  if (r.result && !r.result.auto) { $('winIn').value = r.result.win.join(', '); $('bonusIn').value = r.result.bonus || ''; return; }
+  if (H.length >= W.round && !$('winIn').value) {
+    $('winIn').value = H[W.round - 1].join(', ');
+    $('bonusIn').placeholder = '보너스(선택)';
+    if (!$('autoNote')) $('winIn').insertAdjacentHTML('afterend', '<div class="muted" id="autoNote" style="font-size:.8rem;margin-top:4px">✅ 저장소 데이터에서 당첨번호를 자동으로 채웠어요. 보너스 번호를 넣으면 2등까지 정확히 판정해요(선택).</div>');
+  }
+}
 
 /* ---------- ③-일: 회고 · 렌즈 리그 · 기록 ---------- */
 function leagueTable(rows, showHolm) {
@@ -1252,9 +1748,10 @@ $('budgetSave').onclick = () => {
 // v0.1에서 만든 세트(렌즈 정보 없음)는 회피 렌즈로 간주
 Object.values(S.rounds).forEach(x => x.sets.forEach(s => { if (!s.lens) s.lens = 'avoid'; if (!s.bal) s.bal = []; }));
 window.addEventListener('resize', fitCanvas);
-rebuildH(); renderPicker(); showPanel(); renderGallery(false); tickHero(); setInterval(tickHero, 1000);
-if (R().result) { $('winIn').value = R().result.win.join(', '); $('bonusIn').value = R().result.bonus; }
-autoUpdate();
+applyBig(); rebuildH(); renderPicker(); showPanel(); renderGallery(false); tickHero(); setInterval(tickHero, 1000);
+autoGrade(); prefillResult();
+autoUpdate().then(checkLag); checkLag();
+if (!S.seenGuide) setTimeout(openGuide, 400);       // 처음 방문한 사람에게만 자동으로 안내
 </script>
 </body>
 </html>
