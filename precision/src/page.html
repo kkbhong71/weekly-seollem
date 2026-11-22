@@ -72,6 +72,10 @@ details[open] summary::before{content:'▾ '}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);background:#241c3e;border:1px solid var(--line);padding:10px 16px;border-radius:12px;transition:.3s;z-index:9;max-width:90vw}
 #toast.on{transform:translateX(-50%) translateY(0)}
 .nums-in{width:52px;text-align:center}
+/* CSV 끌어다 놓기 영역: 평소엔 점선, 파일을 올려놓으면 하늘색으로 강조 */
+.drop{border:2px dashed var(--line);border-radius:14px;padding:14px;margin-top:12px;transition:.2s;cursor:pointer}
+.drop.over{border-color:var(--sky);background:rgba(111,182,255,.10);box-shadow:0 0 18px rgba(111,182,255,.25)}
+.drop .hint{font-size:.85rem;color:var(--sub)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -93,9 +97,12 @@ details[open] summary::before{content:'▾ '}
     <h2 id="hData">📊 데이터</h2>
     <div id="dataTxt" class="muted">불러오는 중…</div>
     <!-- CSV 직접 올리기: 접힌 메뉴 대신 항상 보이는 버튼 (숨긴 파일 선택 창을 버튼으로 열기) -->
-    <div class="row" style="margin-top:12px">
-      <button class="ghost" id="csvBtn" type="button">📂 CSV 직접 올리기</button>
-      <span class="muted" id="csvName">선택한 파일 없음</span>
+    <div class="drop" id="dropZone" role="button" tabindex="0" aria-label="CSV 파일을 끌어다 놓거나 눌러서 선택">
+      <div class="row">
+        <button class="ghost" id="csvBtn" type="button">📂 CSV 직접 올리기</button>
+        <span class="muted" id="csvName">선택한 파일 없음</span>
+      </div>
+      <div class="hint" style="margin-top:6px">⬇️ 또는 CSV 파일을 이 상자 안으로 끌어다 놓으세요</div>
     </div>
     <input type="file" id="csvIn" accept=".csv,.txt" hidden aria-label="당첨번호 CSV 파일 선택">
     <p class="muted" style="margin:6px 0 0">저장소 데이터는 자동으로 불러와요. 더 최신 파일이 있거나 다른 형식의 파일을 쓰고 싶을 때 올리세요.
@@ -244,9 +251,20 @@ async function autoUpdate() {
     } catch (e) {}
   }
 }
-$('csvBtn').onclick = () => $('csvIn').click();
-$('csvIn').onchange = async e => {
-  const f = e.target.files[0]; if (!f) return;
+/* 파일 받기는 한 함수로: 버튼 선택 · 끌어다 놓기 둘 다 여기로 들어옴 */
+$('csvBtn').onclick = e => { e.stopPropagation(); $('csvIn').click(); };
+$('csvIn').onchange = e => { handleCSV(e.target.files[0]); e.target.value = ''; };   // 같은 파일 다시 선택해도 동작
+const dz = $('dropZone');
+dz.onclick = () => $('csvIn').click();
+dz.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('csvIn').click(); } };
+['dragenter', 'dragover'].forEach(t => dz.addEventListener(t, e => { e.preventDefault(); dz.classList.add('over'); }));
+['dragleave', 'drop'].forEach(t => dz.addEventListener(t, e => { e.preventDefault(); if (t === 'drop' || !dz.contains(e.relatedTarget)) dz.classList.remove('over'); }));
+dz.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) handleCSV(f); });
+// 상자 밖에 잘못 떨어뜨려도 브라우저가 CSV를 새 탭으로 열어 버리지 않도록 막음
+['dragover', 'drop'].forEach(t => window.addEventListener(t, e => { if (!dz.contains(e.target)) e.preventDefault(); }));
+async function handleCSV(f) {
+  if (!f) return;
+  if (!/\.(csv|txt)$/i.test(f.name)) { toast('CSV(.csv) 또는 텍스트(.txt) 파일만 올릴 수 있어요'); return; }
   $('csvName').textContent = f.name;
   try {
     const p = P.parseCSV(P.decodeBytes(await f.arrayBuffer()));
