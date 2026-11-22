@@ -183,6 +183,14 @@ html.bigtext .slip-grid span{font-size:.72rem}
 .ball.bon::after{content:"B";position:absolute;right:-4px;top:-6px;width:17px;height:17px;border-radius:50%;background:var(--sky);color:#06213a;font-size:.68rem;display:grid;place-items:center}
 :focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:8px}
 .pk:focus-visible,.day:focus-visible{outline-offset:1px}
+/* 🏛️ 정밀 엔진 바로가기: 맨 앞 배치 + 별관 색(하늘→민트) + 은은한 빛 (움직임 줄이기 설정 시 정지) */
+.gear.prec{background:linear-gradient(135deg,#6fb6ff,#5ee6b0);color:#08202a;border:0;font-weight:800;position:relative;
+  box-shadow:0 0 0 1px rgba(111,182,255,.55),0 0 14px rgba(111,182,255,.45);animation:precGlow 2.8s ease-in-out infinite}
+.gear.prec:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.gear.prec:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.prec-tag{position:absolute;top:-8px;right:-6px;font-size:.6rem;font-weight:800;line-height:1;padding:3px 5px;border-radius:99px;
+  background:var(--gold);color:#241a07;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+@keyframes precGlow{50%{box-shadow:0 0 0 1px rgba(94,230,176,.7),0 0 24px rgba(94,230,176,.6)}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -195,7 +203,7 @@ html.bigtext .slip-grid span{font-size:.72rem}
     <div class="h-title"><span class="badge" id="roundBadge">제 ----회</span><h1>일주일의 설렘</h1><div class="muted h-sub">15가지 렌즈로 고른 세상에 하나뿐인 번호, 부담 없이 설레는 일주일</div></div>
     <div class="h-count"><div class="count" id="countdown">--</div><div class="muted" id="countSub">토요일 20:35 추첨까지</div></div>
     <div class="h-meter"><div class="meter"><i id="thrill" style="width:0"></i></div><div class="muted">설렘 지수 <span id="thrillPct">0</span>% · 이번 주 예산 남음 <b id="budgetLeft">-</b></div></div>
-    <div class="h-btns"><button class="ghost gear" id="bigBtn" aria-pressed="false" aria-label="글씨 크게 보기">가<small>+</small> 큰 글씨</button><button class="ghost gear" id="shareBtn" aria-label="앱 공유하기">📤 공유</button><button class="ghost gear" id="precBtn" aria-label="정밀 엔진 열기 (v1.2 원본 점수, 인기도 미사용)" onclick="location.href='precision/'">🏛️ 정밀 엔진</button><button class="ghost gear" id="helpBtn" aria-label="사용법 보기">❓ 사용법</button><button class="ghost gear" id="gearBtn" aria-label="설정 열기">⚙️ 설정</button></div>
+    <div class="h-btns"><button class="gear prec" id="precBtn" aria-label="정밀 엔진 열기 (v1.2 원본 점수, 인기도 미사용)" onclick="location.href='precision/'">🏛️ 정밀 엔진<span class="prec-tag">NEW</span></button><button class="ghost gear" id="bigBtn" aria-pressed="false" aria-label="글씨 크게 보기">가<small>+</small> 큰 글씨</button><button class="ghost gear" id="shareBtn" aria-label="앱 공유하기">📤 공유</button><button class="ghost gear" id="helpBtn" aria-label="사용법 보기">❓ 사용법</button><button class="ghost gear" id="gearBtn" aria-label="설정 열기">⚙️ 설정</button></div>
   </section>
 
   <!-- ② 요일 타임라인 -->
