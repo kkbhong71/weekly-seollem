@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>정밀 엔진 · 일주일의 설렘</title>
+<meta name="description" content="v1.2 원본 조합 점수 방식의 로또 분석 엔진 (인기도 미사용)">
+<meta name="theme-color" content="#1a1430">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icon-192.png">
+<link rel="apple-touch-icon" href="../icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   🏛️ 정밀 엔진 v2.0 · 일주일의 설렘 별관
+   - 엔진: lotto_integrated_v2_0.py를 JavaScript로 이식 (v1.2 원본 조합 점수, 인기도 미사용)
+   - 빌드: src/page.html + src/engine_v2.js + 최신 data/new_XXXX.csv → index.html (python3 build.py)
+   - 기록: 이 브라우저 localStorage('seollem.precision.v1')에만 저장, 본관과 섞이지 않음
+   Oseong Vibe Coding EduHub · K.G.B.
+   ========================================================= */
+:root{--bg1:#0d1220;--bg2:#1a1430;--card:rgba(255,255,255,.045);--line:rgba(255,255,255,.09);
+  --text:#ece9f5;--sub:#a9a3c0;--gold:#f5c451;--mint:#5ee6b0;--rose:#ff7d93;--sky:#6fb6ff}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Noto Sans KR",system-ui,sans-serif;color:var(--text);
+  background:radial-gradient(1200px 600px at 80% -10%,#26365e 0%,transparent 60%),linear-gradient(180deg,var(--bg1),var(--bg2));min-height:100vh;line-height:1.6}
+body.big{font-size:118%}
+.wrap{max-width:860px;margin:0 auto;padding:16px 16px 60px}
+h1,h2{font-family:"Gowun Batang",serif}
+h1{font-size:1.9rem;margin:.1em 0 0;letter-spacing:-.5px}
+h2{font-size:1.18rem;margin:0 0 .5em}
+.muted{color:var(--sub);font-size:.88rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0}
+.badge{display:inline-block;font-size:.72rem;padding:2px 9px;border-radius:99px;background:rgba(111,182,255,.15);color:var(--sky);font-weight:700}
+button{font-family:inherit;font-size:.95rem;border:0;border-radius:12px;padding:10px 16px;cursor:pointer;font-weight:700;background:linear-gradient(135deg,#6fb6ff,#5ee6b0);color:#08202a}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+button:disabled{opacity:.45;cursor:wait}
+input,select{font-family:inherit;font-size:.95rem;background:rgba(0,0,0,.25);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:8px 10px}
+label{font-size:.85rem;color:var(--sub)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.back{color:var(--sub);text-decoration:none;font-size:.9rem;border:1px solid var(--line);border-radius:99px;padding:5px 12px}
+.back:hover{color:var(--text)}
+.balls{display:flex;gap:6px;flex-wrap:wrap}
+.ball{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#1a1308;font-size:.95rem;
+  box-shadow:inset -4px -5px 8px rgba(0,0,0,.25),inset 3px 3px 6px rgba(255,255,255,.4)}
+.b1{background:#fbc400}.b2{background:#69c8f2}.b3{background:#ff7272}.b4{background:#aaa}.b5{background:#b0d840}
+.ball.sm{width:28px;height:28px;font-size:.78rem}
+.ball.hit{box-shadow:0 0 0 3px #fff,0 0 14px var(--gold)}
+.ball.bon{outline:3px dashed var(--sky);outline-offset:2px}
+.set{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:center;padding:12px 0;border-top:1px dashed var(--line)}
+.set:first-child{border-top:0}
+.set .no{font-weight:700;color:var(--gold);text-align:center}
+.meta{font-size:.78rem;color:var(--sub);display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:5px}
+.meta b{color:var(--text);font-weight:500}
+table{width:100%;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums}
+th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:center}
+th{color:var(--sub);font-weight:500}
+.bar{display:inline-block;height:8px;border-radius:4px;background:var(--sky);vertical-align:middle}
+details{border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin:10px 0;background:rgba(0,0,0,.12)}
+summary{cursor:pointer;font-weight:700;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:'▸ ';color:var(--sky)}
+details[open] summary::before{content:'▾ '}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}.ball{width:32px;height:32px;font-size:.88rem}h1{font-size:1.6rem}}
+.verdict{padding:10px 12px;border-radius:12px;background:rgba(111,182,255,.08);border:1px solid rgba(111,182,255,.25);margin:8px 0}
+.warn{background:rgba(245,196,81,.08);border-color:rgba(245,196,81,.3)}
+.prog{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:8px 0}
+.prog>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--sky),var(--mint));transition:width .2s}
+.foot{font-size:.8rem;color:var(--sub);text-align:center;margin-top:26px;line-height:1.8}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);background:#241c3e;border:1px solid var(--line);padding:10px 16px;border-radius:12px;transition:.3s;z-index:9;max-width:90vw}
+#toast.on{transform:translateX(-50%) translateY(0)}
+.nums-in{width:52px;text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a class="back" href="../" aria-label="일주일의 설렘 본관으로 돌아가기">← 일주일의 설렘</a>
+    <button class="ghost" id="bigBtn" style="padding:5px 12px" aria-pressed="false">가+ 큰 글씨</button>
+  </div>
+
+  <header style="text-align:center;margin:14px 0 6px">
+    <span class="badge">v1.2 원본 조합 점수 · 인기도 미사용</span>
+    <h1>🏛️ 정밀 엔진</h1>
+    <div class="muted">8종 번호 점수 → 12종 필터 → 4종 생성 → 커버리지·클러스터 다양성 선택<br>Python 원본(lotto_integrated_v2_0.py)과 점수 교차검증 완료</div>
+  </header>
+
+  <!-- ① 데이터 -->
+  <section class="card" aria-labelledby="hData">
+    <h2 id="hData">📊 데이터</h2>
+    <div id="dataTxt" class="muted">불러오는 중…</div>
+    <details style="margin-top:10px">
+      <summary>CSV 직접 올리기</summary>
+      <p class="muted" style="margin:6px 0">동행복권 원본(CP949)·표준 컬럼(round, num1~num6)·추첨일 포함 형식을 자동 인식해요. 보너스 열이 있으면 채점에 써요.</p>
+      <input type="file" id="csvIn" accept=".csv,.txt" aria-label="당첨번호 CSV 파일 선택">
+    </details>
+  </section>
+
+  <!-- ② 번호 만들기 -->
+  <section class="card" aria-labelledby="hGen">
+    <h2 id="hGen">🎯 번호 만들기 <span class="muted" id="targetTxt"></span></h2>
+    <div class="row">
+      <label for="cntSel">세트 수</label>
+      <select id="cntSel"><option>3</option><option selected>5</option><option>7</option><option>10</option></select>
+      <label for="seedIn">시드</label>
+      <input id="seedIn" type="number" value="42" style="width:120px" aria-describedby="seedHelp">
+      <button class="ghost" id="shuffleBtn" title="시드를 무작위로 바꿔요">🎲 새로 섞기</button>
+    </div>
+    <p class="muted" id="seedHelp" style="margin:6px 0 10px">같은 데이터·같은 시드면 언제 어디서나 같은 번호가 나와요(재현성). 다른 조합을 보려면 시드만 바꾸세요.</p>
+    <button id="genBtn" style="width:100%">번호 만들기</button>
+    <div id="genStatus" class="muted" style="margin-top:8px"></div>
+  </section>
+
+  <!-- ③ 결과 -->
+  <section class="card" id="resCard" hidden aria-labelledby="hRes">
+    <h2 id="hRes">📋 추천 결과</h2>
+    <div id="sets"></div>
+    <div id="setSummary" class="muted" style="margin-top:10px"></div>
+    <div class="row" style="margin-top:12px">
+      <button id="copyBtn" class="ghost">📋 복사</button>
+      <button id="logBtn">📝 이 세트를 예측 기록에 저장</button>
+    </div>
+  </section>
+
+  <!-- ④ 분석 상세 -->
+  <section class="card" id="anaCard" hidden aria-labelledby="hAna">
+    <h2 id="hAna">🔬 분석 상세</h2>
+    <details open><summary>🔥 HOT / ❄️ COLD (최종 점수 기준)</summary><div id="hotCold"></div></details>
+    <details><summary>🔮 클러스터 (조합 모양 묶음)</summary><div id="clusterBox"></div></details>
+    <details><summary>🔍 필터 통계</summary><div id="filterBox"></div></details>
+    <details><summary>🔗 마르코프 / 연관규칙(Lift)</summary><div id="mkBox"></div></details>
+    <details><summary>📐 번호별 8종 점수표</summary><div id="scoreBox" style="overflow-x:auto"></div></details>
+  </section>
+
+  <!-- ⑤ 다중 윈도우 -->
+  <section class="card" aria-labelledby="hMw">
+    <h2 id="hMw">🪟 다중 윈도우 비교</h2>
+    <p class="muted" style="margin:0 0 10px">같은 엔진을 최근 30·50·100회와 전체 데이터에 각각 돌려, 분석 구간에 따라 결과가 얼마나 달라지는지 봐요.</p>
+    <button class="ghost" id="mwBtn">비교 실행</button>
+    <div id="mwBox"></div>
+  </section>
+
+  <!-- ⑥ 백테스트 -->
+  <section class="card" aria-labelledby="hBt">
+    <h2 id="hBt">🔬 랜덤 대조군 백테스트</h2>
+    <p class="muted" style="margin:0 0 10px">과거 각 회차를 '그 이전 데이터만'으로 예측해 실제 결과와 비교해요. 같은 회차에 <b>모델 / 순수 랜덤 / 필터만 통과한 랜덤</b>을 함께 넣어 회차별로 짝지어 비교합니다.</p>
+    <div class="row">
+      <label for="btSel">검증 회차</label>
+      <select id="btSel"><option>20</option><option selected>30</option><option>50</option><option>100</option></select>
+      <button class="ghost" id="btBtn">백테스트 실행</button>
+    </div>
+    <div class="prog" id="btProg" hidden><i></i></div>
+    <div id="btBox"></div>
+  </section>
+
+  <!-- ⑦ 예측 기록 · 채점 -->
+  <section class="card" aria-labelledby="hTr">
+    <h2 id="hTr">📝 예측 기록 · 채점</h2>
+    <p class="muted" style="margin:0 0 8px">예측을 <b>먼저</b> 기록하고 결과가 나온 뒤 채점해요. 잘 맞은 것만 골라 보는 착각을 막는 장치예요. 데이터에 새 회차가 들어오면 자동으로 채점돼요.</p>
+    <details><summary>당첨번호 직접 입력해 채점</summary>
+      <div class="row" style="margin-top:8px">
+        <input id="gRound" type="number" placeholder="회차" style="width:90px" aria-label="회차">
+        <span id="gNums" class="row" style="gap:4px"></span>
+        <label for="gBonus">보너스</label><input id="gBonus" type="number" min="1" max="45" class="nums-in" aria-label="보너스 번호">
+        <button class="ghost" id="gradeBtn">채점</button>
+      </div>
+    </details>
+    <div id="trBox"></div>
+  </section>
+
+  <!-- ⑧ 통계 검증 -->
+  <section class="card" aria-labelledby="hSt">
+    <details><summary id="hSt">🧪 통계 검증 리포트 (확률·필요 표본)</summary><div id="statBox"></div></details>
+  </section>
+
+  <div class="foot">
+    ⚠️ 로또 추첨은 회차 간 독립 시행이며, 모든 조합의 1등 확률은 <b>8,145,060분의 1</b>로 같아요.<br>
+    이 도구는 당첨 확률을 높이지 못해요. 조합 품질 관리와 통계 학습을 위한 도구로, 예산 안에서만 즐겨요.<br>
+    로또는 만 19세 이상만 구매할 수 있습니다. 도박 문제로 힘드시면 <b>☎ 1336</b> (한국도박문제예방치유원, 24시간)<br>
+    <span style="opacity:.8">🏛️ 정밀 엔진 v2.0 · 일주일의 설렘 별관 · Oseong Vibe Coding EduHub · K.G.B.</span>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/*__ENGINE__*/
+</script>
+<script>
+/* =========================================================
+   UI — 엔진(PRECISION)은 순수 계산만, 여기서는 화면·저장·데이터 갱신만 담당
+   ========================================================= */
+const $ = id => document.getElementById(id);
+const P = PRECISION;
+const EMBED = '__DATA__';                    // 빌드 시 내장된 1~N회 (알파벳 1글자 = 번호 1개)
+const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrs';
+const decode = s => { const o = []; for (let i = 0; i + 6 <= s.length; i += 6) o.push([...s.slice(i, i + 6)].map(c => ALPHA.indexOf(c) + 1).sort((a, b) => a - b)); return o; };
+
+/* ---------- 저장 (본관과 다른 키) ---------- */
+const KEY = 'seollem.precision.v1';
+let S = { seed: 42, count: 5, records: {}, extra: {}, bonus: {}, big: false };
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+/* ---------- 회차 계산 (본관과 같은 기준: 1251회 = 2026-11-21 토 20:35) ---------- */
+const WEEK = 7 * 864e5, BASE_ROUND = 1251, BASE_MON = Date.UTC(2026, 10, 15, 15, 0);
+const roundNow = () => BASE_ROUND + Math.floor((Date.now() - BASE_MON) / WEEK);
+
+/* ---------- 데이터: 내장 + 자동 갱신(../data/new_XXXX.csv) + 직접 업로드 병합 ---------- */
+const H0 = decode(EMBED);
+let H = H0, dataSrc = '내장';
+function rebuild() {
+  H = H0.slice();
+  for (let r = H.length + 1; S.extra[r]; r++) H.push(S.extra[r]);
+  $('dataTxt').innerHTML = `분석 데이터: 제1회 ~ 제<b>${H.length}</b>회 (${dataSrc})` +
+    `<div class="muted" style="margin-top:6px">직전 당첨 (제${H.length}회)</div><div class="balls">${H.at(-1).map(n => ballHTML(n, 'sm')).join('')}</div>`;
+  $('targetTxt').textContent = `— 예측 대상 제${H.length + 1}회`;
+  $('gRound').value = $('gRound').value || H.length;
+}
+function merge(parsed, label) {
+  let added = 0, mismatch = 0;
+  parsed.rounds.forEach((r, i) => {
+    const nums = parsed.history[i];
+    if (parsed.bonus[i]) S.bonus[r] = parsed.bonus[i];
+    if (r <= H0.length) { if (H0[r - 1].join() !== nums.join()) mismatch++; return; }
+    if (!S.extra[r]) added++; S.extra[r] = nums;
+  });
+  save(); dataSrc = label; rebuild();
+  return { added, mismatch };
+}
+async function autoUpdate() {
+  for (let r = roundNow(); r >= roundNow() - 12; r--) {
+    try {
+      const res = await fetch(`../data/new_${r}.csv`, { cache: 'no-store' }); if (!res.ok) continue;
+      const p = P.parseCSV(P.decodeBytes(await res.arrayBuffer()));
+      const m = merge(p, `내장 + 저장소 new_${r}.csv 확인`);
+      if (m.added) toast(`최신 당첨번호 ${m.added}회차를 불러왔어요`);
+      autoGrade(); return;
+    } catch (e) {}
+  }
+}
+$('csvIn').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const p = P.parseCSV(P.decodeBytes(await f.arrayBuffer()));
+    const m = merge(p, '업로드 ' + f.name);
+    toast(`${p.history.length}행 읽음 (${p.info.method}) · 새 회차 ${m.added}개${p.info.flipped ? ' · 최신순 파일을 재정렬함' : ''}${m.mismatch ? ` · 내장과 다른 행 ${m.mismatch}개 무시` : ''}`);
+    autoGrade();
+  } catch (err) { toast('읽기 실패: ' + err.message); }
+};
+
+/* ---------- 화면 도우미 ---------- */
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 3200); }
+const ballClass = n => n <= 10 ? 'b1' : n <= 20 ? 'b2' : n <= 30 ? 'b3' : n <= 40 ? 'b4' : 'b5';
+const ballHTML = (n, extra = '') => `<div class="ball ${ballClass(n)} ${extra}" role="img" aria-label="${n}번">${n}</div>`;
+const tick = () => new Promise(r => setTimeout(r, 0));
+const f3 = x => x.toFixed(3), f4 = x => x.toFixed(4);
+const ALGO_KO = a => a === 'weighted' ? '가중치' : a === 'balanced' ? '구간 밸런스' : a === 'pattern' ? '동반출현' : a.startsWith('cluster_') ? '클러스터 C' + a.split('_')[1] : a;
+
+/* ---------- ② 번호 만들기 ---------- */
+let LAST = null;
+$('seedIn').value = S.seed; $('cntSel').value = String(S.count);
+$('shuffleBtn').onclick = () => { $('seedIn').value = P.randomSeed() % 1000000; toast('시드를 바꿨어요. "번호 만들기"를 눌러 주세요'); };
+$('genBtn').onclick = async () => {
+  const btn = $('genBtn'); btn.disabled = true; $('genStatus').textContent = '분석 중… (클러스터 최적 K 탐색 포함, 1~2초)'; await tick();
+  try {
+    S.seed = parseInt($('seedIn').value, 10) || 0; S.count = +$('cntSel').value; save();
+    const t0 = performance.now();
+    LAST = P.run(H, { seed: S.seed, count: S.count });
+    LAST.target = H.length + 1;
+    $('genStatus').textContent = `완료 · ${Math.round(performance.now() - t0)}ms · 후보 ${LAST.candidates}개 (시도 ${LAST.attempts}회 / 필터 통과율 ${(LAST.passed / LAST.attempts * 100).toFixed(1)}%) · ` +
+      LAST.perAlgo.map(([n, c]) => `${n} ${c}`).join(' · ');
+    renderResult(); renderAnalysis();
+  } catch (e) { $('genStatus').textContent = '오류: ' + e.message; }
+  btn.disabled = false;
+};
+
+function renderResult() {
+  const R = LAST; $('resCard').hidden = false;
+  $('hRes').textContent = `📋 제${R.target}회 추천 결과 (시드 ${S.seed})`;
+  $('sets').innerHTML = R.sets.map((s, i) => `<div class="set"><div class="no">${i + 1}</div><div>
+    <div class="balls">${s.nums.map(n => ballHTML(n)).join('')}</div>
+    <div class="meta"><span>합 <b>${s.stat.sum}</b></span><span>AC <b>${s.stat.ac}</b></span><span>홀 <b>${s.stat.odd}</b></span>
+    <span>고(23+) <b>${s.stat.high}</b></span><span>소수 <b>${s.stat.prime}</b></span><span>클러스터 <b>C${s.stat.clusterId}</b> (${s.stat.clusterBonus.toFixed(2)})</span>
+    <span>점수 <b>${s.score.toFixed(5)}</b></span><span>생성 <b>${ALGO_KO(s.algo)}</b></span></div></div></div>`).join('');
+  const cov = new Set(R.sets.flatMap(s => s.nums)).size, cd = {};
+  R.sets.forEach(s => cd[s.stat.clusterId] = (cd[s.stat.clusterId] || 0) + 1);
+  const ov = [];
+  for (let i = 0; i < R.sets.length; i++) for (let j = i + 1; j < R.sets.length; j++) {
+    const o = R.sets[i].nums.filter(x => R.sets[j].nums.includes(x)); if (o.length) ov.push(`${i + 1}↔${j + 1}[${o}]`); }
+  $('setSummary').innerHTML = `📈 커버리지 <b>${cov}/45</b> (${Math.round(cov / 45 * 100)}%) · 🔀 클러스터 분포 ${Object.keys(cd).sort().map(k => `C${k}:${cd[k]}세트`).join(' ')}<br>🔁 세트 간 중복: ${ov.length ? ov.join(', ') : '없음'}`;
+}
+
+function renderAnalysis() {
+  const { E, G, filter: F } = LAST; $('anaCard').hidden = false;
+  $('hotCold').innerHTML = `<div class="muted" style="margin-top:6px">HOT 8</div><div class="balls">${P.hotNumbers(E, 8).map(n => ballHTML(n, 'sm')).join('')}</div>
+    <div class="muted" style="margin-top:6px">COLD 5</div><div class="balls">${P.coldNumbers(E, 5).map(n => ballHTML(n, 'sm')).join('')}</div>`;
+  $('clusterBox').innerHTML = `<p class="muted">${G.kind === 'kmeans' ? `KMeans · 실루엣 최적 K=${G.nClusters}${G.silhouette ? ` (점수 ${f3(G.silhouette)})` : ''}` : '합계 3분위 간이 클러스터'} · 상위 타깃 ${G.top.map(c => 'C' + c).join(', ')}</p>
+    <table><tr><th>클러스터</th><th>회수</th><th>비율</th><th>평균합</th><th>평균 폭</th><th>최근 50회</th></tr>
+    ${Object.entries(G.stats).map(([c, s]) => `<tr><td>C${c}${G.top[0] == c ? ' ⭐' : ''}</td><td>${s.count}</td><td>${(s.ratio * 100).toFixed(1)}%</td><td>${s.avgSum.toFixed(0)}</td><td>${s.avgSpread.toFixed(1)}</td><td>${(s.recentRatio * 100).toFixed(0)}%</td></tr>`).join('')}</table>`;
+  const tot = Object.values(F.rej).reduce((a, b) => a + b, 0);
+  $('filterBox').innerHTML = `<p class="muted">시도 ${F.checked}회 · 통과 ${F.passed}회 (${(F.passed / F.checked * 100).toFixed(1)}%)</p><table><tr><th>필터</th><th>탈락</th><th>비중</th><th></th></tr>
+    ${Object.entries(F.rej).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<tr><td>${k}</td><td>${v}</td><td>${(v / tot * 100).toFixed(1)}%</td><td style="text-align:left"><span class="bar" style="width:${v / tot * 160}px"></span></td></tr>`).join('')}</table>`;
+  const mk = [...Array(45).keys()].map(i => i + 1).sort((a, b) => E.markovRaw[b] - E.markovRaw[a]).slice(0, 6);
+  $('mkBox').innerHTML = `<div class="grid2"><div><p class="muted">마르코프 · 조건 = 직전 회차 [${E.last}]</p><table><tr><th>번호</th><th>P(다음|직전)</th></tr>
+    ${mk.map(n => `<tr><td>${n}</td><td>${E.markovRaw[n].toFixed(5)}</td></tr>`).join('')}</table></div>
+    <div><p class="muted">Lift 상위 규칙 · 최근 ${E.assocWindow}회 · 수축 m=${E.config.ASSOC_SHRINK}</p><table><tr><th>쌍</th><th>lift</th></tr>
+    ${E.topRules.slice(0, 6).map(r => `<tr><td>${r[0]} ↔ ${r[1]}</td><td>${r[2].toFixed(2)}</td></tr>`).join('')}</table></div></div>
+    <p class="muted">* lift 1.3 안팎은 300회 표본에서 우연히도 충분히 나오는 수준이에요.</p>`;
+  const W = E.config.W;
+  $('scoreBox').innerHTML = `<p class="muted">각 점수 0~1 · 가중치: 빈도 ${W.frequency} · 최근 ${W.recency} · 갭 ${W.gap} · 쌍 ${W.pair} · 모멘텀 ${W.momentum} · 구간 ${W.zone} · 마르코프 ${W.markov} · Lift ${W.assoc}</p>
+    <table><tr><th>번호</th><th>최종</th><th>빈도</th><th>갭</th><th>쌍</th><th>모멘텀</th><th>구간</th><th>마르코프</th><th>Lift</th><th>미출현</th></tr>
+    ${[...Array(45).keys()].map(i => i + 1).sort((a, b) => E.final[b] - E.final[a]).map(n => `<tr><td>${n}</td><td><b>${(E.final[n] * 100).toFixed(2)}%</b></td><td>${f3(E.freq[n])}</td><td>${f3(E.gap[n])}</td><td>${f3(E.pairStrength[n])}</td><td>${f3(E.momentum[n])}</td><td>${f3(E.zoneScore[n])}</td><td>${f3(E.markov[n])}</td><td>${f3(E.assoc[n])}</td><td>${E.gapNow[n]}회</td></tr>`).join('')}</table>`;
+}
+
+$('copyBtn').onclick = async () => {
+  const txt = `제${LAST.target}회 정밀 엔진 (시드 ${S.seed})\n` + LAST.sets.map(s => s.nums.join(', ')).join('\n');
+  try { await navigator.clipboard.writeText(txt); toast('복사했어요'); } catch (e) { toast('복사 실패 — 직접 선택해 복사해 주세요'); }
+};
+
+/* ---------- ⑦ 예측 기록 · 채점 ---------- */
+$('logBtn').onclick = () => {
+  const r = LAST.target, rec = S.records[r] = S.records[r] || { sets: [], ts: new Date().toISOString(), seeds: [] };
+  if (rec.graded) { toast('이미 채점이 끝난 회차예요'); return; }
+  let add = 0; for (const s of LAST.sets) { const k = s.nums.join(','); if (!rec.sets.includes(k)) { rec.sets.push(k); add++; } }
+  if (!rec.seeds.includes(S.seed)) rec.seeds.push(S.seed);
+  save(); renderTracker(); toast(`제${r}회 예측 ${add}세트 기록${LAST.sets.length - add ? ` (중복 ${LAST.sets.length - add}세트 제외)` : ''}`);
+};
+function gradeRound(r, actual, bonus) {
+  const rec = S.records[r]; if (!rec || !rec.sets.length) return false;
+  const a = new Set(actual);
+  rec.result = rec.sets.map(k => { const n = k.split(',').map(Number), m = n.filter(x => a.has(x)).length;
+    return { m, rank: P.prizeRank(m, bonus != null && n.includes(bonus)) }; });
+  Object.assign(rec, { graded: true, actual: actual.slice().sort((x, y) => x - y), bonus: bonus ?? null }); save(); return true;
+}
+function autoGrade() {
+  let n = 0;
+  for (const r of Object.keys(S.records).map(Number)) if (!S.records[r].graded && r <= H.length) { if (gradeRound(r, H[r - 1], S.bonus[r] ?? null)) n++; }
+  if (n) toast(`지난 회차 ${n}개를 자동 채점했어요`);
+  renderTracker();
+}
+$('gNums').innerHTML = [1, 2, 3, 4, 5, 6].map(i => `<input type="number" min="1" max="45" class="nums-in" aria-label="당첨번호 ${i}">`).join('');
+$('gradeBtn').onclick = () => {
+  const r = +$('gRound').value, nums = [...$('gNums').querySelectorAll('input')].map(x => +x.value), b = +$('gBonus').value || null;
+  if (nums.some(x => !(x >= 1 && x <= 45)) || new Set(nums).size !== 6) { toast('당첨번호 6개를 1~45 사이로 서로 다르게 입력해 주세요'); return; }
+  if (!S.records[r]) { toast(`제${r}회 기록이 없어요`); return; }
+  if (b) S.bonus[r] = b;
+  S.records[r].graded = false; gradeRound(r, nums, b); renderTracker(); toast(`제${r}회 채점 완료`);
+};
+function renderTracker() {
+  const rs = Object.keys(S.records).map(Number).sort((a, b) => b - a);
+  if (!rs.length) { $('trBox').innerHTML = '<p class="muted">아직 기록이 없어요. 번호를 만든 뒤 "예측 기록에 저장"을 눌러 주세요.</p>'; return; }
+  const all = rs.filter(r => S.records[r].graded).flatMap(r => S.records[r].result.map(x => x.m));
+  const ranks = {}; rs.forEach(r => (S.records[r].result || []).forEach(x => { if (x.rank) ranks[x.rank] = (ranks[x.rank] || 0) + 1; }));
+  let sum = `<div class="verdict">누적 채점 <b>${all.length}세트</b>` + (all.length ? ` · 평균 일치 <b>${f4(P.mean(all))}</b> (이론 랜덤 0.8000)` : '') +
+    (Object.keys(ranks).length ? ` · 당첨 ${Object.keys(ranks).sort().map(k => `${k}등 ${ranks[k]}회`).join(', ')}` : '');
+  if (all.length >= 30) { const ci = P.bootstrapCI(all); sum += `<br>95% 신뢰구간 [${f4(ci[0])}, ${f4(ci[1])}] → ${ci[0] <= 0.8 && 0.8 <= ci[1] ? '무작위와 통계적으로 동등' : P.mean(all) > 0.8 ? '무작위보다 우수' : '무작위보다 열등'}`; }
+  else sum += `<br><span class="muted">판정에는 수백 세트가 필요해요 (10% 향상 검출 기준 ${P.requiredSample(10).toLocaleString()}세트)</span>`;
+  sum += '</div>';
+  $('trBox').innerHTML = sum + rs.map(r => { const rec = S.records[r], act = rec.actual ? new Set(rec.actual) : null;
+    return `<details${rec.graded ? '' : ' open'}><summary>제${r}회 · ${rec.sets.length}세트 · ${rec.graded ? `채점 완료 (최고 ${Math.max(...rec.result.map(x => x.m))}개 일치)` : '결과 대기'}</summary>
+    ${rec.graded ? `<div class="muted" style="margin-top:6px">당첨번호</div><div class="balls">${rec.actual.map(n => ballHTML(n, 'sm')).join('')}${rec.bonus ? `<span class="muted" style="align-self:center">+</span>${ballHTML(rec.bonus, 'sm')}` : '<span class="muted" style="align-self:center">보너스 미입력 (5개 일치는 3등으로 표시)</span>'}</div>` : ''}
+    ${rec.sets.map((k, i) => { const n = k.split(',').map(Number), res = rec.result && rec.result[i];
+      return `<div class="row" style="margin:6px 0"><div class="balls">${n.map(x => ballHTML(x, 'sm' + (act && act.has(x) ? ' hit' : rec.bonus === x ? ' bon' : ''))).join('')}</div>${res ? `<span class="muted">${res.m}개${res.rank ? ` 🎉 <b>${res.rank}등</b>` : ''}</span>` : ''}</div>`; }).join('')}
+    <button class="ghost" style="padding:4px 10px;font-size:.8rem" onclick="delRec(${r})">기록 삭제</button></details>`; }).join('');
+}
+window.delRec = r => { if (confirm(`제${r}회 기록을 삭제할까요? 되돌릴 수 없어요.`)) { delete S.records[r]; save(); renderTracker(); } };
+
+/* ---------- ⑤ 다중 윈도우 ---------- */
+$('mwBtn').onclick = async () => {
+  $('mwBtn').disabled = true; $('mwBox').innerHTML = '<p class="muted">계산 중…</p>'; await tick();
+  const res = P.multiWindow(H, S.seed, S.count);
+  const ov = [], L = res.map(r => r.label);
+  let mat = `<table><tr><th></th>${L.map(l => `<th>${l}</th>`).join('')}</tr>`;
+  for (const a of res) { mat += `<tr><th>${a.label}</th>`; for (const b of res) { const o = a.top10.filter(x => b.top10.includes(x)).length; mat += `<td>${o}개</td>`; if (a !== b) ov.push(o); } mat += '</tr>'; }
+  mat += '</table>';
+  const mo = P.mean(ov);
+  $('mwBox').innerHTML = res.map(r => `<details><summary>${r.label} · 분석 ${r.rounds}회차</summary><div class="muted">Top10: ${r.top10.join(', ')}</div>
+    ${r.sets.map(s => `<div class="balls" style="margin:5px 0">${s.map(n => ballHTML(n, 'sm')).join('')}</div>`).join('')}</details>`).join('') +
+    `<p class="muted" style="margin-top:10px">Top10 번호 겹침 (낮을수록 구간 선택에 휘둘림)</p>${mat}
+    <div class="verdict ${mo < 5 ? 'warn' : ''}">평균 겹침 <b>${mo.toFixed(1)}/10개</b> (완전 무작위라면 약 2.2개).<br>
+    <span class="muted">빈도·모멘텀·구간·쌍 점수는 원래 최근 10~100회만 보기 때문에, '최근 50회'와 '전체'가 같은 최근 데이터를 보게 되어 겹침이 높게 나오는 구조예요. 데이터에 안정된 규칙이 있다는 증거로 읽지 않는 게 정확해요.</span></div>`;
+  $('mwBtn').disabled = false;
+};
+
+/* ---------- ⑥ 백테스트 (회차마다 화면을 잠깐 놓아 주며 진행) ---------- */
+$('btBtn').onclick = async () => {
+  const n = +$('btSel').value, start = Math.max(H.length - n, 100), rows = [];
+  $('btBtn').disabled = true; $('btProg').hidden = false; $('btBox').innerHTML = '';
+  const bar = $('btProg').firstElementChild, t0 = performance.now();
+  for (let idx = start; idx < H.length; idx++) {
+    rows.push(P.backtestRound(H, idx, 2026, P.DEFAULT_CONFIG));
+    bar.style.width = ((idx - start + 1) / (H.length - start) * 100) + '%';
+    $('btBox').innerHTML = `<p class="muted">${idx - start + 1}/${H.length - start} 회차 처리 중…</p>`; await tick();
+  }
+  const s = P.summarizeBacktest(rows), sec = ((performance.now() - t0) / 1000).toFixed(1);
+  const hl = rows.flatMap(r => r.model.map((m, i) => [r.round, r.sets[i], m])).filter(x => x[2] >= 3);
+  $('btBox').innerHTML = `<table><tr><th>집단</th><th>평균 일치</th></tr>
+    <tr><td>🏛️ 모델</td><td><b>${f4(s.modelAvg)}</b></td></tr><tr><td>🎲 순수 랜덤</td><td>${f4(s.pureAvg)}</td></tr>
+    <tr><td>🧹 필터 랜덤</td><td>${f4(s.filtAvg)}</td></tr><tr><td>📐 이론 기대값</td><td>0.8000</td></tr></table>
+    <div class="verdict">① 모델 − 순수 랜덤: <b>${s.diffP >= 0 ? '+' : ''}${f4(s.diffP)}</b> · 95% CI [${f4(s.ciP[0])}, ${f4(s.ciP[1])}] → <b>${s.verdictP}</b><br>
+    ② 모델 − 필터 랜덤: <b>${s.diffF >= 0 ? '+' : ''}${f4(s.diffF)}</b> · 95% CI [${f4(s.ciF[0])}, ${f4(s.ciF[1])}] → <b>${s.verdictF}</b><br>
+    5등 이상(3개+) 적중 <b>${s.hits}회</b> / ${s.n}세트 (무작위 기대 ${s.hitsExp.toFixed(2)}회) · 이항검정 p = <b>${f4(s.pValue)}</b> ${s.pValue < 0.05 ? '(p&lt;0.05 — 다만 지표 여러 개 중 하나라면 우연일 수 있어요)' : '(우연 범위)'}</div>
+    ${hl.length ? `<details><summary>3개 이상 일치한 세트 ${hl.length}개</summary>${hl.map(x => `<div class="muted">제${x[0]}회: [${x[1]}] → ${x[2]}개</div>`).join('')}</details>` : ''}
+    <p class="muted">검증 ${s.rounds}회차 · ${sec}초 · ①은 프로그램 전체가, ②는 필터를 뺀 '점수 모델' 자체가 효과가 있는지를 봐요. 같은 회차 안의 세트끼리는 서로 엮여 있으므로 회차 평균을 표본 단위로 써요.</p>`;
+  $('btBtn').disabled = false; $('btProg').hidden = true;
+};
+
+/* ---------- ⑧ 통계 검증 리포트 ---------- */
+(function renderStats() {
+  const pm = P.MATCH_PMF, T = P.TOTAL, sd = Math.sqrt(P.THEORY_VAR);
+  const rows = [['1등 (6개)', pm[6]], ['2등 (5개+보너스)', 6 / T], ['3등 (5개)', pm[5] - 6 / T], ['4등 (4개)', pm[4]], ['5등 (3개)', pm[3]]];
+  $('statBox').innerHTML = `<p class="muted">한 세트의 일치 개수는 초기하분포를 따라요 — 평균 0.8000, 표준편차 ${f4(sd)}</p>
+    <table><tr><th>등수</th><th>확률</th></tr>${rows.map(([k, p]) => `<tr><td>${k}</td><td>1 / ${Math.round(1 / p).toLocaleString()}</td></tr>`).join('')}</table>
+    <p class="muted" style="margin-top:12px">표본 크기별 '무작위에서도 나올 수 있는' 평균 일치 범위</p>
+    <table><tr><th>세트 수</th><th>95% 범위</th></tr>${[50, 100, 300, 1000, 3000].map(n => { const se = sd / Math.sqrt(n); return `<tr><td>${n.toLocaleString()}</td><td>${f3(0.8 - 1.96 * se)} ~ ${f3(0.8 + 1.96 * se)}</td></tr>`; }).join('')}</table>
+    <p class="muted" style="margin-top:12px">향상폭을 검출하는 데 필요한 세트 수 (유의수준 5%, 검정력 80%)</p>
+    <table><tr><th>향상폭</th><th>필요 세트</th><th>주 5세트 기준</th></tr>${[5, 10, 20, 50].map(p => { const n = P.requiredSample(p); return `<tr><td>${p}%</td><td>${n.toLocaleString()}</td><td>약 ${(n / 5 / 52).toFixed(1)}년</td></tr>`; }).join('')}</table>`;
+})();
+
+/* ---------- 큰 글씨 ---------- */
+function applyBig() { document.body.classList.toggle('big', !!S.big); $('bigBtn').setAttribute('aria-pressed', String(!!S.big)); }
+$('bigBtn').onclick = () => { S.big = !S.big; save(); applyBig(); };
+
+/* ---------- 시작 ---------- */
+applyBig(); rebuild(); renderTracker(); autoUpdate();
+</script>
+</body>
+</html>
