@@ -92,11 +92,14 @@ details[open] summary::before{content:'▾ '}
   <section class="card" aria-labelledby="hData">
     <h2 id="hData">📊 데이터</h2>
     <div id="dataTxt" class="muted">불러오는 중…</div>
-    <details style="margin-top:10px">
-      <summary>CSV 직접 올리기</summary>
-      <p class="muted" style="margin:6px 0">동행복권 원본(CP949)·표준 컬럼(round, num1~num6)·추첨일 포함 형식을 자동 인식해요. 보너스 열이 있으면 채점에 써요.</p>
-      <input type="file" id="csvIn" accept=".csv,.txt" aria-label="당첨번호 CSV 파일 선택">
-    </details>
+    <!-- CSV 직접 올리기: 접힌 메뉴 대신 항상 보이는 버튼 (숨긴 파일 선택 창을 버튼으로 열기) -->
+    <div class="row" style="margin-top:12px">
+      <button class="ghost" id="csvBtn" type="button">📂 CSV 직접 올리기</button>
+      <span class="muted" id="csvName">선택한 파일 없음</span>
+    </div>
+    <input type="file" id="csvIn" accept=".csv,.txt" hidden aria-label="당첨번호 CSV 파일 선택">
+    <p class="muted" style="margin:6px 0 0">저장소 데이터는 자동으로 불러와요. 더 최신 파일이 있거나 다른 형식의 파일을 쓰고 싶을 때 올리세요.
+      동행복권 원본(CP949)·표준 컬럼(round, num1~num6)·추첨일 포함 형식을 자동 인식하고, 보너스 열이 있으면 채점에 써요.</p>
   </section>
 
   <!-- ② 번호 만들기 -->
@@ -241,8 +244,10 @@ async function autoUpdate() {
     } catch (e) {}
   }
 }
+$('csvBtn').onclick = () => $('csvIn').click();
 $('csvIn').onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
+  $('csvName').textContent = f.name;
   try {
     const p = P.parseCSV(P.decodeBytes(await f.arrayBuffer()));
     const m = merge(p, '업로드 ' + f.name);
